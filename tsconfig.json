@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "jsx": "react",
+    "target": "es2015",
+    "baseUrl": "",
+    "rootDir": "src/ts/",
+    "moduleResolution": "node",
+    "sourceMap": false,
+    "paths": {
+      "openfl/*": ["node_modules/openfl/lib/openfl/*"]
+    }
+  },
+  "include": [
+    "src/ts/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "version": "0.2.0",
+  "type": "TypeDefinitionPlugin",
+  "id": "com.fraymakers.FraymakersTypes",
+  "name": "Fraymakers API Types",
+  "description": "Supplies typedefs for Fraymakers API auto-completion."
+}
