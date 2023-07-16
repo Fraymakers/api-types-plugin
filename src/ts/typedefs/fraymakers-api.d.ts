@@ -1774,21 +1774,25 @@ declare class AnimationStats extends JSONClass {
 	 */
 	resetRotation: boolean;
 	/**
-	 * Ground speed acceleration override for this animation. Resorts to default groundSpeedAcceleration animation stat when set to a negative value.
+	 * Ground speed acceleration override for this animation. Resorts to default groundSpeedAcceleration GameObject stat when set to a negative value.
 	 */
 	groundSpeedAcceleration: number;
 	/**
-	 * Air speed acceleration override for this animation. Resorts to default aerialSpeedAcceleration animation stat when set to a negative value.
+	 * Air speed acceleration override for this animation. Resorts to default aerialSpeedAcceleration GameObject stat when set to a negative value.
 	 */
 	aerialSpeedAcceleration: number;
 	/**
-	 * Maximum ground speed limit override for this animation. Resorts to default groundSpeedCap animation stat when set to a negative value.
+	 * Maximum ground speed limit override for this animation. Resorts to default groundSpeedCap GameObject stat when set to a negative value.
 	 */
 	groundSpeedCap: number;
 	/**
-	 * Maximum air speed limit override for this animation. Resorts to default aerialSpeedCap animation stat when set to a negative value.
+	 * Maximum air speed limit override for this animation. Resorts to default aerialSpeedCap GameObject stat when set to a negative value.
 	 */
 	aerialSpeedCap: number;
+	/**
+	 * Terminal velocity override for this animation. Resorts to default terminalVelocity GameObject stat when set to a negative value.
+	 */
+	terminalVelocity: number;
 	/**
 	 * Metadata passed into the attack
 	 */
