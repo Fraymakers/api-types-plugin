@@ -58,6 +58,7 @@ declare type AssistAnimationStatsProps = {
 	slideOff: boolean;
 	solid: boolean;
 	staleDecay: boolean;
+	terminalVelocity: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -141,6 +142,7 @@ declare type CharacterAnimationStatsProps = {
 	slideOff: boolean;
 	solid: boolean;
 	staleDecay: boolean;
+	terminalVelocity: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -333,6 +335,7 @@ declare type ItemAnimationStatsProps = {
 	slideOff: boolean;
 	solid: boolean;
 	staleDecay: boolean;
+	terminalVelocity: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -405,6 +408,7 @@ declare type ProjectileAnimationStatsProps = {
 	slideOff: boolean;
 	solid: boolean;
 	staleDecay: boolean;
+	terminalVelocity: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -500,6 +504,7 @@ declare type AnimationStatsProps = {
 	slideOff: boolean;
 	solid: boolean;
 	staleDecay: boolean;
+	terminalVelocity: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -1283,6 +1288,7 @@ declare type CState = TCState & {
 	CRAWL_BACK: number;
 	LEDGE_IN: number;
 	LEDGE_LOOP: number;
+	LEDGE_CLIMB_IN: number;
 	LEDGE_CLIMB: number;
 	LEDGE_ROLL_CLIMB: number;
 	LEDGE_ROLL: number;
@@ -1387,6 +1393,7 @@ declare type TCState = {
 	CRAWL_BACK: number;
 	LEDGE_IN: number;
 	LEDGE_LOOP: number;
+	LEDGE_CLIMB_IN: number;
 	LEDGE_CLIMB: number;
 	LEDGE_ROLL_CLIMB: number;
 	LEDGE_ROLL: number;
@@ -1487,6 +1494,7 @@ declare type CStateGroup = TCStateGroup & {
 	GRAB: number;
 	KO: number;
 	CRAWL: number;
+	LEDGE_CLIMB: number;
 	/**
 	 * Translates constant to a user-readable string.
 	 */
@@ -1512,6 +1520,7 @@ declare type TCStateGroup = {
 	GRAB: number;
 	KO: number;
 	CRAWL: number;
+	LEDGE_CLIMB: number;
 	AIRDASH: number;
 	/**
 	 * Translates constant to a user-readable string.
@@ -4102,6 +4111,10 @@ declare class ControlsObject extends ASerializable {
 	hasRightStickAttackFlag(): boolean;
 	hasRightStickSpecialFlag(): boolean;
 	rightStickPressed(): boolean;
+	analogDashActive(): boolean;
+	analogWalkActive(): boolean;
+	digitalDashActive(): boolean;
+	digitalWalkActive(): boolean;
 	UP: boolean;
 	DOWN: boolean;
 	LEFT: boolean;
