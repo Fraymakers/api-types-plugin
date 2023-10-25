@@ -118,6 +118,8 @@ declare type CharacterAnimationStatsProps = {
 	bodyStatusStrength: number;
 	chargeFramesMax: number;
 	chargeFramesTotal: number;
+	chargeGlow: boolean;
+	chargeShake: boolean;
 	doubleJumpCancel: boolean;
 	endType: number;
 	grabLedgeBehind: boolean;
@@ -270,6 +272,7 @@ declare type HitboxStatsProps = {
 	baseKnockback: number;
 	bodyX: number;
 	bodyY: number;
+	cameraShakeType: number;
 	damage: number;
 	directionalInfluence: boolean;
 	disabled: boolean;
@@ -982,6 +985,7 @@ declare interface Character extends GameObject, TCharacter {
 
 declare interface TCharacter {
 	getAssistName(): string;
+	getAssistContentStat(name: string): any;
 	getDamageCounterAssistSprite(): Sprite;
 	getAssistCharge(): number;
 	setAssistCharge(value: number): void;
@@ -1221,6 +1225,20 @@ declare class MatchSettingsConfig extends JSONClass {
 	 * netcodeType value: Rollback netcode is simualted offline
 	 */
 	static readonly NETCODE_ROLLBACK_SIMULATED: number;
+}
+
+declare class StructureType {
+	protected constructor();
+	static readonly NONE: number;
+	static readonly LEFT_WALL: number;
+	static readonly RIGHT_WALL: number;
+	static readonly CEILING: number;
+	static readonly FLOOR: number;
+	static readonly AUTO: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	static constToString(value: number): string;
 }
 
 declare class TPoint {
@@ -2002,6 +2020,18 @@ declare class AssistStats extends GameObjectStats {
 	assistBgBeforeTrail: boolean;
 }
 
+declare class CameraShakeType {
+	protected constructor();
+	/**
+	 * No camera shake should occur.
+	 */
+	static readonly NONE: number;
+	/**
+	 * Camera shake will be automatically calculated by the engine.
+	 */
+	static readonly AUTO: number;
+}
+
 declare interface CharacterAnimationStats extends AnimationStats, TCharacterAnimationStats {
 	new(settings: CharacterAnimationStatsProps);
 	/**
@@ -2048,6 +2078,14 @@ declare interface TCharacterAnimationStats {
 	 * When true, landing during this animation will ignore the value of landAnimation and send the character to the default landing animation.
 	 */
 	autocancel: boolean;
+	/**
+	 * When true, the engine will apply its built-in charge shake animation to the character sprites.
+	 */
+	chargeShake: boolean;
+	/**
+	 * When true, the engine will apply its built-in charge glow animation to the character sprites.
+	 */
+	chargeGlow: boolean;
 }
 
 declare interface CharacterStats extends GameObjectStats, TCharacterStats {
@@ -2405,7 +2443,7 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 	 */
 	maxChargeDamageMultiplier: number;
 	/**
-	 * How long the foe will be held in place before knockback is applied.
+	 * Instead of using the automatic hitsound calc (uses element and hitstrength).
 	 */
 	hitSoundOverride: string;
 	/**
@@ -2510,6 +2548,10 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 
 declare interface THitboxStats {
 	new(settings: HitboxStatsProps);
+	/**
+	 * Specifies the camera shake behavior for the hit.
+	 */
+	cameraShakeType: number;
 }
 
 declare interface ProjectileAnimationStats extends AnimationStats, TProjectileAnimationStats {
@@ -2749,6 +2791,8 @@ declare class Buttons {
 	static ACTION: number;
 	static JUMP: number;
 	static SHIELD: number;
+	static SHIELD1: number;
+	static SHIELD2: number;
 	static GRAB: number;
 	static EMOTE: number;
 	static PAUSE: number;
@@ -3191,6 +3235,7 @@ declare class Stage extends ApiObject {
 	getCurrentFrame(): number;
 	getTotalFrames(): number;
 	getResource(): Resource;
+	getBackgroundBehindContainer(): Container;
 	getBackgroundStructuresContainer(): Container;
 	getBackgroundShadowsContainer(): Container;
 	getBackgroundEffectsContainer(): Container;
@@ -3200,11 +3245,15 @@ declare class Stage extends ApiObject {
 	getForegroundStructuresContainer(): Container;
 	getForegroundShadowsContainer(): Container;
 	getForegroundEffectsContainer(): Container;
+	getForegroundFrontContainer(): Container;
 	getDeathBounds(): RectCollisionArea;
 	getCameraBounds(): RectCollisionArea;
 	addEventListener(type: number, func: any, options?: {persistent?: boolean}): void;
 	hasEventListener(type: number, func?: any): boolean;
 	removeEventListener(type: number, func: any): void;
+	/**
+	 * Not currently implemented, will have no effect.
+	 */
 	updateLightboxStats(id: number, lightboxStats: {color?: number, intensity?: number, radius?: number, type?: number}): void;
 	isDisposed(): boolean;
 }
@@ -3260,20 +3309,6 @@ declare class Vfx extends Entity {
 	attachTo(object: Entity): void;
 	unattachFromObject(): void;
 	getSprite(): Sprite;
-}
-
-declare class StructureType {
-	protected constructor();
-	static readonly NONE: number;
-	static readonly LEFT_WALL: number;
-	static readonly RIGHT_WALL: number;
-	static readonly CEILING: number;
-	static readonly FLOOR: number;
-	static readonly AUTO: number;
-	/**
-	 * Translates constant to a user-readable string.
-	 */
-	static constToString(value: number): string;
 }
 
 declare class Matrix {
@@ -3612,6 +3647,7 @@ declare class StatusEffectType {
 	static readonly ATTACK_HITSTUN_MULTIPLIER: number;
 	static readonly ATTACK_HITSTUN_FLAT: number;
 	static readonly ATTACK_SELF_HITSTOP_MULTIPLIER: number;
+	static readonly WALK_SPEED_CAP_MULTIPLIER: number;
 	static readonly CUSTOM: number;
 	/**
 	 * Translates constant to a user-readable string.
@@ -3701,6 +3737,21 @@ declare class ShakeDecayType {
 	static readonly EASE_IN_OUT_QUINT: number;
 }
 
+declare class VfxLayer {
+	protected constructor();
+	static readonly BACKGROUND_BEHIND: string;
+	static readonly BACKGROUND_STRUCTURES: string;
+	static readonly BACKGROUND_SHADOWS: string;
+	static readonly BACKGROUND_EFFECTS: string;
+	static readonly CHARACTERS_BACK: string;
+	static readonly CHARACTERS: string;
+	static readonly CHARACTERS_FRONT: string;
+	static readonly FOREGROUND_STRUCTURES: string;
+	static readonly FOREGROUND_SHADOWS: string;
+	static readonly FOREGROUND_EFFECTS: string;
+	static readonly FOREGROUND_FRONT: string;
+}
+
 declare class VfxStats extends JSONClass {
 	constructor(settings: {animation?: string, chain?: any, fadeOut?: boolean, flipWith?: boolean, forceVisible?: boolean, layer?: string, loop?: boolean, physics?: boolean, relativeWith?: boolean, resizeWith?: boolean, rotation?: number, scaleX?: number, scaleY?: number, shrink?: boolean, smoothing?: boolean, spriteContent?: string, timeout?: number, x?: number, y?: number});
 	/**
@@ -3731,6 +3782,9 @@ declare class VfxStats extends JSONClass {
 	 * Rotation of the Vfx in degrees
 	 */
 	rotation: number;
+	/**
+	 * Specifies the layer to render the Vfx on which can be any valid VfxLayer constant. Defaults to VfxLayer.CHARACTERS_FRONT.
+	 */
 	layer: string;
 	/**
 	 * How long to wait in frames before the Vfx should be removed. This also affects how long fade out and shrink should last (default: 0 = no timeout)
@@ -3962,6 +4016,7 @@ declare class MatchEvent extends CustomEvent {
 	static readonly TICK_END: number;
 	static readonly INTROS_STARTED: number;
 	static readonly MATCH_STARTED: number;
+	static readonly MATCH_BEFORE_END_GRAPHIC_SHOWN: number;
 	static readonly MATCH_END_GRAPHIC_SHOWN: number;
 	static readonly MATCH_ENDED: number;
 	static readonly MATCH_PAUSED: number;
@@ -4125,6 +4180,8 @@ declare class ControlsObject extends ASerializable {
 	JUMP: boolean;
 	JUMP_ANY: boolean;
 	SHIELD: boolean;
+	SHIELD1: boolean;
+	SHIELD2: boolean;
 	GRAB: boolean;
 	EMOTE: boolean;
 	PAUSE: boolean;
