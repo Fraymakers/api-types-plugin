@@ -22,6 +22,7 @@ declare type GraphicsSettingsProps = {
 	hudReactionShake: boolean;
 	launchScreen: string;
 	lights: boolean;
+	parryDarkenVfx: boolean;
 	pingDisplay: boolean;
 	playerOutlines: string;
 	screenFilter: string;
@@ -289,6 +290,7 @@ declare type HitboxStatsProps = {
 	index: number;
 	jabResetType: number;
 	knockbackCap: number;
+	knockbackCapDelay: number;
 	knockbackGrowth: number;
 	limb: number;
 	maxChargeDamageMultiplier: number;
@@ -833,7 +835,7 @@ declare class GameObject extends Entity {
 	updateAnimationStats(stats: AnimationStatsProps): void;
 	getAnimationStatsMetadata(): any;
 	updateAnimationStatsMetadata(stats: any): void;
-	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
+	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
 	/**
 	 * Returns the first grabbed foe in the grabbed foes array.
 	 * @return The gameObjectApi object representing the grabbed foe.
@@ -1008,6 +1010,7 @@ declare interface TCharacter {
 
 declare interface Match extends IApiObject, TMatch {
 	globals: any;
+	isReplay(): boolean;
 	getMatchSettingsConfig(): MatchSettingsConfig;
 	addEventListener(type: number, func: any, options?: {persistent?: boolean}): void;
 	hasEventListener(type: number, func?: any): boolean;
@@ -1060,6 +1063,7 @@ declare interface TMatch {
 	 * @param allowList Entities that will be allowed to update
 	 */
 	freezeScreen(duration: number, allowList: GameObject[]): void;
+	createVfx(vfxStats: VfxStats, owner?: GameObject): Vfx;
 }
 
 declare interface Projectile extends GameObject, TProjectile {
@@ -1082,9 +1086,333 @@ declare class GraphicsSettings {
 	static screenShake: boolean;
 	static hitVfx: boolean;
 	static dustVfx: boolean;
+	static parryDarkenVfx: boolean;
 	static damageHudPosition: string;
 	static playerOutlines: string;
 	static shadows: boolean;
+}
+
+declare class AiBehavior {
+	protected constructor();
+	/**
+	 * CPUs will fight taking their normal CPU level into account. This is the default behavior for a CPU unless otherwise specified.
+	 */
+	static readonly ATTACK: number;
+	/**
+	 * CPUs will stand still while onstage, but will attempt to recover when knocked offstage. This is also the behavior for CPUs that are set to level 0.
+	 */
+	static readonly IDLE: number;
+	/**
+	 * CPUs will to avoid the player by running away, jumping, and rolling.
+	 */
+	static readonly EVADE: number;
+	/**
+	 * CPUs will walk forward constantly, turning around when approaching the edge of a stage or platform.
+	 */
+	static readonly WALK: number;
+	/**
+	 * CPUs  will constantly jump in place.
+	 */
+	static readonly JUMP: number;
+	/**
+	 * CPUs will constantly shield in place.
+	 */
+	static readonly SHIELD: number;
+	/**
+	 * CPUs will be controlled by human input.
+	 */
+	static readonly HUMAN: number;
+}
+
+declare class AiTechOption {
+	protected constructor();
+	/**
+	 * CPUs will tech using their default behavior.
+	 */
+	static readonly DEFAULT: number;
+	/**
+	 * CPUs will randomly choose between missing the tech, teching in place, rolling left, and rolling right.
+	 */
+	static readonly RANDOM: number;
+	/**
+	 * CPUs will always miss techs.
+	 */
+	static readonly ALWAYS_MISS: number;
+	/**
+	 * CPUs will always tech in place.
+	 */
+	static readonly TECH_IN_PLACE: number;
+	/**
+	 * CPUs will always tech roll left.
+	 */
+	static readonly TECH_ROLL_LEFT: number;
+	/**
+	 * CPUs will always tech roll right.
+	 */
+	static readonly TECH_ROLL_RIGHT: number;
+}
+
+declare class AiShieldHitOption {
+	protected constructor();
+	/**
+	 * CPUs will react to their shield being hit using their default behavior.
+	 */
+	static readonly DEFAULT: number;
+	/**
+	 * CPUs will randomly choose between doing nothing, grabbing, spot dodging, and rolling after their shield is hit.
+	 */
+	static readonly RANDOM: number;
+	/**
+	 * CPUs will continue to hold their shield for a brief period of time after their shield is hit.
+	 */
+	static readonly HOLD_SHIELD: number;
+	/**
+	 * CPUs will grab after their shield is hit.
+	 */
+	static readonly GRAB: number;
+	/**
+	 * CPUs will spot dodge after their shield is hit.
+	 */
+	static readonly SPOT_DODGE: number;
+	/**
+	 * CPUs will roll after their shield is hit.
+	 */
+	static readonly ROLL: number;
+}
+
+declare class AiCrashOption {
+	protected constructor();
+	/**
+	 * CPUs will use their default CRASH_LOOP behavior.
+	 */
+	static readonly DEFAULT: number;
+	/**
+	 * CPUs will randomly choose between doing nothing, getting up, attacking, rolling left, and rolling right.
+	 */
+	static readonly RANDOM: number;
+	/**
+	 * CPUs will do nothing.
+	 */
+	static readonly NOTHING: number;
+	/**
+	 * CPUs will get up.
+	 */
+	static readonly GET_UP: number;
+	/**
+	 * CPUs will use their getup attack.
+	 */
+	static readonly ATTACK: number;
+	/**
+	 * CPUs will roll to the left.
+	 */
+	static readonly ROLL_LEFT: number;
+	/**
+	 * CPUs will roll to the right.
+	 */
+	static readonly ROLL_RIGHT: number;
+}
+
+declare class AiLedgeOption {
+	protected constructor();
+	/**
+	 * CPUs will use their default ledge behavior.
+	 */
+	static readonly DEFAULT: number;
+	/**
+	 * CPUs will randomly choose between climbing, rolling, attacking, jumping, and wavedashing.
+	 */
+	static readonly RANDOM: number;
+	/**
+	 * CPUs will do nothing.
+	 */
+	static readonly NOTHING: number;
+	/**
+	 * CPUs will climb up from the ledge.
+	 */
+	static readonly CLIMB: number;
+	/**
+	 * CPUs will roll from the ledge.
+	 */
+	static readonly ROLL: number;
+	/**
+	 * CPUs will attack from the ledge.
+	 */
+	static readonly ATTACK: number;
+	/**
+	 * CPUs will jump from the ledge.
+	 */
+	static readonly JUMP: number;
+	/**
+	 * CPUs will wavedash from the ledge.
+	 */
+	static readonly WAVEDASH: number;
+}
+
+declare class AiDirectionalInfluenceOption {
+	protected constructor();
+	/**
+	 * CPUs will use their default DI behavior.
+	 */
+	static readonly DEFAULT: number;
+	/**
+	 * CPUs will randomly choose a direction to DI.
+	 */
+	static readonly RANDOM: number;
+	/**
+	 * CPUs will DI according to their set level.
+	 */
+	static readonly CPU: number;
+	/**
+	 * CPUs will not DI.
+	 */
+	static readonly NONE: number;
+	/**
+	 * CPUs will DI in.
+	 */
+	static readonly IN: number;
+	/**
+	 * CPUs will DI out.
+	 */
+	static readonly OUT: number;
+	/**
+	 * CPUs will DI up.
+	 */
+	static readonly UP: number;
+	/**
+	 * CPUs will DI down.
+	 */
+	static readonly DOWN: number;
+	/**
+	 * CPUs will DI left.
+	 */
+	static readonly LEFT: number;
+	/**
+	 * CPUs will DI right.
+	 */
+	static readonly RIGHT: number;
+	/**
+	 * CPUs will DI up+left.
+	 */
+	static readonly UP_LEFT: number;
+	/**
+	 * CPUs will DI up+right.
+	 */
+	static readonly UP_RIGHT: number;
+	/**
+	 * CPUs will DI down+left.
+	 */
+	static readonly DOWN_LEFT: number;
+	/**
+	 * CPUs will DI down+right.
+	 */
+	static readonly DOWN_RIGHT: number;
+}
+
+declare class AiHitstopNudgeOption {
+	protected constructor();
+	/**
+	 * CPUs will use their default hitstop nudge behavior.
+	 */
+	static readonly DEFAULT: number;
+	/**
+	 * CPUs will randomly choose a direction to nudge.
+	 */
+	static readonly RANDOM: number;
+	/**
+	 * CPUs will nudge according to their set level.
+	 */
+	static readonly CPU: number;
+	/**
+	 * CPUs will not nudge.
+	 */
+	static readonly NONE: number;
+	/**
+	 * CPUs will nudge in.
+	 */
+	static readonly IN: number;
+	/**
+	 * CPUs will nudge out.
+	 */
+	static readonly OUT: number;
+	/**
+	 * CPUs will nudge up.
+	 */
+	static readonly UP: number;
+	/**
+	 * CPUs will nudge down.
+	 */
+	static readonly DOWN: number;
+	/**
+	 * CPUs will nudge left.
+	 */
+	static readonly LEFT: number;
+	/**
+	 * CPUs will nudge right.
+	 */
+	static readonly RIGHT: number;
+	/**
+	 * CPUs will nudge up+left.
+	 */
+	static readonly UP_LEFT: number;
+	/**
+	 * CPUs will nudge up+right.
+	 */
+	static readonly UP_RIGHT: number;
+	/**
+	 * CPUs will nudge down+left.
+	 */
+	static readonly DOWN_LEFT: number;
+	/**
+	 * CPUs will nudge down+right.
+	 */
+	static readonly DOWN_RIGHT: number;
+}
+
+declare class StructureType {
+	protected constructor();
+	static readonly NONE: number;
+	static readonly LEFT_WALL: number;
+	static readonly RIGHT_WALL: number;
+	static readonly CEILING: number;
+	static readonly FLOOR: number;
+	static readonly AUTO: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	static constToString(value: number): string;
+}
+
+declare class TPoint {
+	constructor(x: number, y?: number);
+	distance(point: TPoint): number;
+	/**
+	 * Fast relative distance calculator
+	 */
+	distanceSquared(point: TPoint): number;
+	init(x: number, y?: number): TPoint;
+	copyFrom(point: TPoint): void;
+	/**
+	 * Adds other into this point, returns this
+	 * @param other The other point to add
+	 * @return New point after combining the points together
+	 */
+	add(other: TPoint): TPoint;
+	clone(): TPoint;
+	scale(x: number, y: number): void;
+	offset(x: number, y: number): void;
+	equals(point: TPoint): boolean;
+	static polar(len: number, angle: number, outPoint?: TPoint): TPoint;
+	static interpolate(point1: TPoint, point2: TPoint, fraction: number): TPoint;
+	/**
+	 * Gets the interesection between two line segments (or null if no intersection can be found)
+	 * @param a0 First point of line segment A
+	 * @param a1 Second point of line segment A
+	 * @param b0 First point of line segment B
+	 * @param b1  Second point of line segment B
+	 * @param out An existing point object to be used as a return value instead of allocating a new Point.
+	 * @return Point The point at which the two line segments intersect (or null if there is no intersection)
+	 */
+	static lineSegmentsIntersect(a0: TPoint, a1: TPoint, b0: TPoint, b1: TPoint, out?: TPoint): TPoint;
 }
 
 /**
@@ -1115,7 +1443,7 @@ declare class MatchSettingsConfig extends JSONClass {
 	 * A class containing parameters that configures the default settings of a Match.
 	 * Any player-affecting parameters will be overridden by the PlayerConfig.
 	 */
-	constructor(settings: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number});
+	constructor(settings: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number});
 	/**
 	 * The content/resource ID of the Stage that the Match takes place on.
 	 */
@@ -1206,6 +1534,10 @@ declare class MatchSettingsConfig extends JSONClass {
 	 */
 	matchRules: {contentId: string, namespace: string, resourceId: string}[];
 	/**
+	 * The pause config for this match.
+	 */
+	pauseMenuId: string;
+	/**
 	 * Dynamic metadata - use this for anything else not covered by existing variables.
 	 */
 	metadata: any;
@@ -1225,53 +1557,6 @@ declare class MatchSettingsConfig extends JSONClass {
 	 * netcodeType value: Rollback netcode is simualted offline
 	 */
 	static readonly NETCODE_ROLLBACK_SIMULATED: number;
-}
-
-declare class StructureType {
-	protected constructor();
-	static readonly NONE: number;
-	static readonly LEFT_WALL: number;
-	static readonly RIGHT_WALL: number;
-	static readonly CEILING: number;
-	static readonly FLOOR: number;
-	static readonly AUTO: number;
-	/**
-	 * Translates constant to a user-readable string.
-	 */
-	static constToString(value: number): string;
-}
-
-declare class TPoint {
-	constructor(x: number, y?: number);
-	distance(point: TPoint): number;
-	/**
-	 * Fast relative distance calculator
-	 */
-	distanceSquared(point: TPoint): number;
-	init(x: number, y?: number): TPoint;
-	copyFrom(point: TPoint): void;
-	/**
-	 * Adds other into this point, returns this
-	 * @param other The other point to add
-	 * @return New point after combining the points together
-	 */
-	add(other: TPoint): TPoint;
-	clone(): TPoint;
-	scale(x: number, y: number): void;
-	offset(x: number, y: number): void;
-	equals(point: TPoint): boolean;
-	static polar(len: number, angle: number, outPoint?: TPoint): TPoint;
-	static interpolate(point1: TPoint, point2: TPoint, fraction: number): TPoint;
-	/**
-	 * Gets the interesection between two line segments (or null if no intersection can be found)
-	 * @param a0 First point of line segment A
-	 * @param a1 Second point of line segment A
-	 * @param b0 First point of line segment B
-	 * @param b1  Second point of line segment B
-	 * @param out An existing point object to be used as a return value instead of allocating a new Point.
-	 * @return Point The point at which the two line segments intersect (or null if there is no intersection)
-	 */
-	static lineSegmentsIntersect(a0: TPoint, a1: TPoint, b0: TPoint, b1: TPoint, out?: TPoint): TPoint;
 }
 
 declare var CState:CState;
@@ -2369,7 +2654,7 @@ declare interface TCharacterStats {
 }
 
 declare interface HitboxStats extends JSONClass, THitboxStats {
-	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
+	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
 	/**
 	 * The numerical index of the hitbox that can be used to identify which hitbox was involved in a hit.
 	 */
@@ -2527,6 +2812,10 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 	 */
 	knockbackCap: number;
 	/**
+	 * Number of frames to delay the application of knockbackCap. When negative or zero, knockbackCap is immediately applied. When 1, the cap will be applied on the next frame.
+	 */
+	knockbackCapDelay: number;
+	/**
 	 * Additional metadata.
 	 */
 	metadata: any;
@@ -2573,6 +2862,66 @@ declare interface ProjectileStats extends GameObjectStats, TProjectileStats {
 
 declare interface TProjectileStats {
 	new(settings: ProjectileStatsProps);
+}
+
+declare var StatusEffectType:StatusEffectType;
+declare type StatusEffectType = TStatusEffectType & {
+	constructor();
+	JUMP_SPEED_MULTIPLIER: number;
+	DAMAGE_OVER_TIME: number;
+	DISABLE_ACTION: number;
+	SIZE_MULTIPLIER: number;
+	WIDTH_MULTIPLIER: number;
+	HEIGHT_MULTIPLIER: number;
+	HITBOX_DAMAGE_MULTIPLIER: number;
+	ATTACK_KNOCKBACK_MULTIPLIER: number;
+	ATTACK_HITSTOP_MULTIPLIER: number;
+	ALPHA_MULTIPLIER: number;
+	INVISIBILITY: number;
+	AERIAL_FRICTION_MULTIPLIER: number;
+	GROUND_FRICTION_MULTIPLIER: number;
+	ATTACK_HITSTOP_FLAT: number;
+	ATTACK_SELF_HITSTOP_FLAT: number;
+	ATTACK_HITSTUN_MULTIPLIER: number;
+	ATTACK_HITSTUN_FLAT: number;
+	ATTACK_SELF_HITSTOP_MULTIPLIER: number;
+	WALK_SPEED_CAP_MULTIPLIER: number;
+	DAMAGE_LOCKED: number;
+	CUSTOM: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
+}
+
+declare type TStatusEffectType = {
+	constructor();
+	JUMP_SPEED_MULTIPLIER: number;
+	DAMAGE_OVER_TIME: number;
+	DISABLE_ACTION: number;
+	SIZE_MULTIPLIER: number;
+	WIDTH_MULTIPLIER: number;
+	HEIGHT_MULTIPLIER: number;
+	HITBOX_DAMAGE_MULTIPLIER: number;
+	ATTACK_KNOCKBACK_MULTIPLIER: number;
+	ATTACK_HITSTOP_MULTIPLIER: number;
+	ALPHA_MULTIPLIER: number;
+	INVISIBILITY: number;
+	AERIAL_FRICTION_MULTIPLIER: number;
+	GROUND_FRICTION_MULTIPLIER: number;
+	ATTACK_HITSTOP_FLAT: number;
+	ATTACK_SELF_HITSTOP_FLAT: number;
+	ATTACK_HITSTUN_MULTIPLIER: number;
+	ATTACK_HITSTUN_FLAT: number;
+	ATTACK_SELF_HITSTOP_MULTIPLIER: number;
+	WALK_SPEED_CAP_MULTIPLIER: number;
+	DAMAGE_LOCKED: number;
+	CUSTOM: number;
+	AIRDASH_CANCEL_SPEED_CONSERVATION_MULTIPLIER: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
 }
 
 /**
@@ -2991,6 +3340,7 @@ declare class EntityType {
 
 declare class TFrameTimer extends ASerializable {
 	constructor(initDuration: number);
+	active: boolean;
 	completed: boolean;
 	readonly duration: number;
 	readonly elapsedFrames: number;
@@ -3543,8 +3893,8 @@ declare class SpecialAngle {
 	 */
 	static RANDOM_UP: number;
 	/**
-	 * Based on params, calculates a new angle as per the given SpecialAngle.
-	 * If a value cannot be calculated, returns -1.0
+	 * Based on params, calculates and returns a new angle as per the given SpecialAngle.
+	 * If an autolink angle is calculated, also sets stats.reversible = false
 	 * @param params
 	 * @return Float
 	 */
@@ -3625,34 +3975,6 @@ declare class AnimationEndType {
 	 * Animation will change depending on the values of AnimationStats.nextState and AnimationStats.nextAnimation
 	 */
 	static readonly AUTO: number;
-}
-
-declare class StatusEffectType {
-	protected constructor();
-	static readonly JUMP_SPEED_MULTIPLIER: number;
-	static readonly DAMAGE_OVER_TIME: number;
-	static readonly DISABLE_ACTION: number;
-	static readonly SIZE_MULTIPLIER: number;
-	static readonly WIDTH_MULTIPLIER: number;
-	static readonly HEIGHT_MULTIPLIER: number;
-	static readonly HITBOX_DAMAGE_MULTIPLIER: number;
-	static readonly ATTACK_KNOCKBACK_MULTIPLIER: number;
-	static readonly ATTACK_HITSTOP_MULTIPLIER: number;
-	static readonly ALPHA_MULTIPLIER: number;
-	static readonly INVISIBILITY: number;
-	static readonly AERIAL_FRICTION_MULTIPLIER: number;
-	static readonly GROUND_FRICTION_MULTIPLIER: number;
-	static readonly ATTACK_HITSTOP_FLAT: number;
-	static readonly ATTACK_SELF_HITSTOP_FLAT: number;
-	static readonly ATTACK_HITSTUN_MULTIPLIER: number;
-	static readonly ATTACK_HITSTUN_FLAT: number;
-	static readonly ATTACK_SELF_HITSTOP_MULTIPLIER: number;
-	static readonly WALK_SPEED_CAP_MULTIPLIER: number;
-	static readonly CUSTOM: number;
-	/**
-	 * Translates constant to a user-readable string.
-	 */
-	static constToString(value: number): string;
 }
 
 /**
@@ -4001,6 +4323,7 @@ declare class CharacterEvent extends CustomEvent {
 	static readonly OFFSCREEN: number;
 	static readonly GRAB_CLANK: number;
 	static readonly JUMP_CANCEL: number;
+	static readonly RESPAWN: number;
 	/**
 	 * Translates constant to a user-readable string.
 	 */
@@ -4053,7 +4376,7 @@ declare class StructureEvent extends CustomEvent {
 }
 
 declare class LobbyEvent extends CustomEvent {
-	readonly data: {data?: any, desyncFrame?: number, lobbies?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}[], lobby?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}, lobbyMatchData?: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, message?: string, ping?: number, pingMax?: number, pingMin?: number, playerConnectionInfo?: any, playerConnectionInfos?: any[], uid?: string};
+	readonly data: {data?: any, desyncFrame?: number, lobbies?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}[], lobby?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}, lobbyMatchData?: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, message?: string, ping?: number, pingMax?: number, pingMin?: number, playerConnectionInfo?: any, playerConnectionInfos?: any[], uid?: string};
 	static readonly CONNECT: number;
 	static readonly DISCONNECT: number;
 	static readonly LOGIN: number;
