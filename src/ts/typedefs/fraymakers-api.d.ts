@@ -131,7 +131,9 @@ declare type CharacterAnimationStatsProps = {
 	immovable: boolean;
 	landAnimation: string;
 	landType: number;
+	leaveGroundAnimation: string;
 	leaveGroundCancel: boolean;
+	leaveGroundType: number;
 	metadata: any;
 	name: string;
 	nextAnimation: string;
@@ -658,9 +660,28 @@ declare class Entity extends ApiObject {
 	getState(): number;
 	getPreviousState(): number;
 	getPreviousStateGroup(): number;
+	/**
+	 * Sets the state of the entity without changing the animation or inducing any other side effects.
+	 * @param state The state to set the entity to.
+	 */
 	setState(state: number): void;
+	/**
+	 * Transitions the entity to a new state, taking into account the object's state transition map and animation rules. Note that the the target state is not guaranteed to be the current state after this function is called, so it's important to check the state after calling this function if you need to know the result.
+	 * @param state The state to transition to.
+	 * @param animationOverride Overrides the animation to use for the state transition.
+	 */
 	toState(state: number, animationOverride?: string): void;
+	/**
+	 * Checks if the entity is in the specified state.
+	 * @param state The state to check for.
+	 * @return Bool True if the entity is in the specified state, false otherwise.
+	 */
 	inState(state: number): boolean;
+	/**
+	 * Checks if the entity is in the specified state group.
+	 * @param stateGroup The state group to check for.
+	 * @return Bool True if the entity is in the specified state group, false otherwise.
+	 */
 	inStateGroup(stateGroup: number): boolean;
 	kill(): void;
 	flipX(value: number): number;
@@ -859,6 +880,7 @@ declare class GameObject extends Entity {
 	getCostumeIndex(): number;
 	setCostumeIndex(costumeIndex: number): void;
 	getCostumeShader(): PaletteSwapShader;
+	setCostumeShader(paletteSwapShader: PaletteSwapShader): void;
 	getPlayerBorder(): PlayerBorder;
 	setPlayerBorder(playerBorder: PlayerBorder): void;
 	getHitstun(): number;
@@ -880,6 +902,21 @@ declare class GameObject extends Entity {
 	 * @see GameObjectEvent.HITSTOP_START
 	 */
 	startHitstop(value: number, shake: boolean): boolean;
+	/**
+	 * Forcibly starts a new set of hitstun.
+	 * @param value Duration in frames
+	 * @see GameObjectEvent.ENTER_HITSTUN
+	 * @see GameObjectEvent.EXIT_HITSTUN
+	 */
+	forceStartHitstun(value: number): void;
+	/**
+	 * Attempts to start a new set of hitstun. Only starts a new set of hitstun if the new value is greater than the existing value.
+	 * @param value Duration in frames
+	 * @return Bool True if a new set of hitstop was started
+	 * @see GameObjectEvent.ENTER_HITSTUN
+	 * @see GameObjectEvent.EXIT_HITSTUN
+	 */
+	startHitstun(value: number): boolean;
 	/**
 	 * Returns true if the angle is within the spike threshold.
 	 * @param angle
@@ -957,6 +994,11 @@ declare interface Character extends GameObject, TCharacter {
 	getPressedControls(): ControlsObject;
 	getHeldControls(): ControlsObject;
 	clearInputBuffer(): void;
+	/**
+	 * Returns true during inputUpdateHook() execution if this is the first input update check for the character on the current frame. Note that when transitioning between states there is the possibility of multiple input update checks in a single frame due to the input buffer.
+	 * @return Bool
+	 */
+	isFirstInputUpdate(): boolean;
 	getCharacterStat(name: string): any;
 	updateCharacterStats(stats: CharacterStatsProps): void;
 	updateAnimationStats(_tmp_stats: AnimationStatsProps): void;
@@ -2038,6 +2080,7 @@ declare class AnimationStats extends JSONClass {
 	slideOff: boolean;
 	/**
 	 * If enabled the entity will have their animation canceled if they transition from grounded to aerial.
+	 * @deprecated Characters can use leaveGroundType instead
 	 */
 	leaveGroundCancel: boolean;
 	/**
@@ -2355,6 +2398,12 @@ declare interface CharacterAnimationStats extends AnimationStats, TCharacterAnim
 	 * When true, the player can influence the character's movement during this animation.
 	 */
 	allowMovement: boolean;
+	/**
+	 * Determines the behaviour of the Character when becoming airborne.
+	 * @see LeaveGroundType
+	 */
+	leaveGroundType: number;
+	leaveGroundAnimation: string;
 }
 
 declare interface TCharacterAnimationStats {
@@ -3458,6 +3507,7 @@ declare class Shader extends ASerializable {
 
 declare class PaletteSwapShader extends Shader {
 	paletteMap: { [key: number]: number };
+	static create(palette: { [key: number]: number }): PaletteSwapShader;
 }
 
 declare class Point extends TPoint {
@@ -3555,7 +3605,6 @@ declare class Sprite extends Drawable {
 	totalFrames: number;
 	getPalette(): { [key: number]: number };
 	setPalette(value: { [key: number]: number }): { [key: number]: number };
-	dispose(): void;
 	/**
 	 * Generates a Sprite object from a given content id path.
 	 * @param spriteContent The content id path of the sprite to be created.
@@ -3815,6 +3864,29 @@ declare class LandType {
 	 * The engine will do nothing at all, except for allow the user to override with their own behaviour.
 	 */
 	static readonly CUSTOM: number;
+}
+
+declare class LeaveGroundType {
+	protected constructor();
+	/**
+	 * The engine will not do anything, the Character will remain in its current animation.
+	 */
+	static readonly NONE: number;
+	/**
+	 * The engine will cancel the animation and send the Character to the FALL state.
+	 * If a leaveGroundAnimation is provided, the engine will play that animation instead of the default FALL state animation.
+	 */
+	static readonly TO_FALL: number;
+	/**
+	 * The engine will attempt to change animations to the provided leaveGroundAnimation, but will preserve the current state.
+	 * If no leaveGroundAnimation is provided or it is invalid, then the animation will not be canceled.
+	 */
+	static readonly TRANSITION: number;
+	/**
+	 * The engine will attempt to change animations to the provided leaveGroundAnimation and will preserve the current state. Additionally, the frame the Character was on will be skipped to.
+	 * As much as possible, this new animation is treated as though it were the original animation, so some stat values are ignored.
+	 */
+	static readonly LINK_FRAMES: number;
 }
 
 declare class PState {
