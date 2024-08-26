@@ -28,6 +28,7 @@ declare type GraphicsSettingsProps = {
 	screenFilter: string;
 	screenShake: boolean;
 	shadows: boolean;
+	stageBackgrounds: boolean;
 }
 
 declare type AssistAnimationStatsProps = {
@@ -116,6 +117,7 @@ declare type CharacterAnimationStatsProps = {
 	autoRotate: boolean;
 	autocancel: boolean;
 	bodyStatus: number;
+	bodyStatusShaderColor: number;
 	bodyStatusStrength: number;
 	chargeFramesMax: number;
 	chargeFramesTotal: number;
@@ -934,6 +936,15 @@ declare class Assist extends CustomGameObject {
 	getPortColor(): number;
 }
 
+declare class CustomApiObject extends ApiObject {
+	getOwner(): ApiObject;
+	setOwner(owner: ApiObject): void;
+	kill(): void;
+}
+
+declare class AssistController extends CustomApiObject {
+}
+
 /**
  * Wrapper for an Event object used to extend Event functionality
  */
@@ -991,11 +1002,34 @@ declare interface Character extends GameObject, TCharacter {
 	 * Also note that this function runs automatically when calling toLand()
 	 */
 	preLand(effect: boolean): void;
+	/**
+	 * Returns the pressed controls for the character. This data may be modified by the input buffer or other input post-processing.
+	 * @return Cached ControlsObject instance containing the pressed controls data.
+	 */
 	getPressedControls(): ControlsObject;
+	/**
+	 * Returns the held controls for the character. This data may be modified by the input buffer or other input post-processing.
+	 * @return Cached ControlsObject instance containing the held controls data.
+	 */
 	getHeldControls(): ControlsObject;
+	/**
+	 * Returns the raw held controls for the character. This data is not modified by the input buffer or any other input post-processing.
+	 * @return Cached ControlsObject instance containing the raw held controls data.
+	 */
+	getRawHeldControls(): ControlsObject;
 	clearInputBuffer(): void;
 	/**
-	 * Returns true during inputUpdateHook() execution if this is the first input update check for the character on the current frame. Note that when transitioning between states there is the possibility of multiple input update checks in a single frame due to the input buffer.
+	 * Helper for determining if the character is in a state that should cause inputs to be buffered. This includes some non-state related conditions like being in hitstop or shieldstun.
+	 * @return Returns true if inputs should be buffered during the current state.
+	 */
+	inBufferInputState(): boolean;
+	/**
+	 * Helper for checking if a state is valid state for inputs to be buffered.
+	 * @return Returns true if inputs should be buffered during the specified state
+	 */
+	isBufferInputState(state: number): boolean;
+	/**
+	 * Returns true during inputUpdateHook() execution if this is the first input update check for the character on the current frame. Note that when transitioning between states there is the possibilty of multiple input update checks in a single frame due to the input buffer.
 	 * @return Bool
 	 */
 	isFirstInputUpdate(): boolean;
@@ -1029,8 +1063,10 @@ declare interface Character extends GameObject, TCharacter {
 
 declare interface TCharacter {
 	getAssistName(): string;
+	getAssistController(): AssistController;
 	getAssistContentStat(name: string): any;
 	getDamageCounterAssistSprite(): Sprite;
+	setAssistCutinAnimation(animation: string): void;
 	getAssistCharge(): number;
 	setAssistCharge(value: number): void;
 	getAirdashCount(): number;
@@ -1070,6 +1106,7 @@ declare interface Match extends IApiObject, TMatch {
 	createLineSegmentStructure(points: number[], stats?: StructureStats): CustomLineSegmentStructure;
 	createProjectile(projectileContent: string, owner?: GameObject): Projectile;
 	createCustomGameObject(customGameObjectContent: string, owner?: GameObject): GameObject;
+	createCustomApiObject(customApiObjectContent: string, owner?: ApiObject): CustomApiObject;
 	createRibbonTrail(sprite: Sprite, segments: number, singleAnchor: boolean): RibbonTrail;
 	createVfx(vfxStats: VfxStats, owner?: GameObject): Vfx;
 	createShockwaveEffect(eventData: {displacementMapId?: string, distortionEaseType?: number, distortionEnd: number, distortionStart: number, duration: number, scaleEaseType?: number, scaleEnd: number, scaleStart: number, x: number, y: number}): void;
@@ -1129,6 +1166,7 @@ declare class GraphicsSettings {
 	static hitVfx: boolean;
 	static dustVfx: boolean;
 	static parryDarkenVfx: boolean;
+	static stageBackgrounds: boolean;
 	static damageHudPosition: string;
 	static playerOutlines: string;
 	static shadows: boolean;
@@ -2404,6 +2442,10 @@ declare interface CharacterAnimationStats extends AnimationStats, TCharacterAnim
 	 */
 	leaveGroundType: number;
 	leaveGroundAnimation: string;
+	/**
+	 * The color filter used when a body status is active. Can set to 0x000000 to disable.
+	 */
+	bodyStatusShaderColor: number;
 }
 
 declare interface TCharacterAnimationStats {
@@ -2849,7 +2891,8 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 	 */
 	shieldable: boolean;
 	/**
-	 * Allows the Hitbox to be armored by launch resistance or heavy armor.
+	 * Jab reset settings
+	 * @see JabResetType
 	 */
 	jabResetType: number;
 	/**
@@ -2934,7 +2977,21 @@ declare type StatusEffectType = TStatusEffectType & {
 	ATTACK_HITSTUN_MULTIPLIER: number;
 	ATTACK_HITSTUN_FLAT: number;
 	ATTACK_SELF_HITSTOP_MULTIPLIER: number;
+	GRAVITY_MULTIPLIER: number;
+	SHORT_HOP_SPEED_MULTIPLIER: number;
+	DOUBLE_JUMP_SPEED_MULTIPLIER: number;
+	TERMINAL_VELOCITY_MULTIPLIER: number;
+	FAST_FALL_SPEED_MULTIPLIER: number;
+	WALK_SPEED_INITIAL_MULTIPLIER: number;
 	WALK_SPEED_CAP_MULTIPLIER: number;
+	DASH_SPEED_MULTIPLIER: number;
+	RUN_SPEED_INITIAL_MULTIPLIER: number;
+	RUN_SPEED_ACCELERATION_MULTIPLIER: number;
+	RUN_SPEED_CAP_MULTIPLIER: number;
+	GROUND_SPEED_ACCELERATION_MULTIPLIER: number;
+	GROUND_SPEED_CAP_MULTIPLIER: number;
+	AERIAL_SPEED_ACCELERATION_MULTIPLIER: number;
+	AERIAL_SPEED_CAP_MULTIPLIER: number;
 	DAMAGE_LOCKED: number;
 	CUSTOM: number;
 	/**
@@ -2963,7 +3020,21 @@ declare type TStatusEffectType = {
 	ATTACK_HITSTUN_MULTIPLIER: number;
 	ATTACK_HITSTUN_FLAT: number;
 	ATTACK_SELF_HITSTOP_MULTIPLIER: number;
+	GRAVITY_MULTIPLIER: number;
+	SHORT_HOP_SPEED_MULTIPLIER: number;
+	DOUBLE_JUMP_SPEED_MULTIPLIER: number;
+	TERMINAL_VELOCITY_MULTIPLIER: number;
+	FAST_FALL_SPEED_MULTIPLIER: number;
+	WALK_SPEED_INITIAL_MULTIPLIER: number;
 	WALK_SPEED_CAP_MULTIPLIER: number;
+	DASH_SPEED_MULTIPLIER: number;
+	RUN_SPEED_INITIAL_MULTIPLIER: number;
+	RUN_SPEED_ACCELERATION_MULTIPLIER: number;
+	RUN_SPEED_CAP_MULTIPLIER: number;
+	GROUND_SPEED_ACCELERATION_MULTIPLIER: number;
+	GROUND_SPEED_CAP_MULTIPLIER: number;
+	AERIAL_SPEED_ACCELERATION_MULTIPLIER: number;
+	AERIAL_SPEED_CAP_MULTIPLIER: number;
 	DAMAGE_LOCKED: number;
 	CUSTOM: number;
 	AIRDASH_CANCEL_SPEED_CONSERVATION_MULTIPLIER: number;
@@ -4093,6 +4164,11 @@ declare class JabResetType {
 	 * The attack will never incur a jab reset, no matter how little knockback is generated
 	 */
 	static readonly NEVER: number;
+}
+
+declare class BodyStatusColor {
+	protected constructor();
+	static readonly AUTO: number;
 }
 
 declare class StrongInputType {
