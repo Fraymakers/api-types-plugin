@@ -183,6 +183,9 @@ declare type CharacterStatsProps = {
 	attackVoiceSilenceRate: number;
 	baseScaleX: number;
 	baseScaleY: number;
+	buryAnimation: string;
+	buryFrame: number;
+	buryOffsetY: number;
 	cameraBoxHeight: number;
 	cameraBoxOffsetX: number;
 	cameraBoxOffsetY: number;
@@ -277,6 +280,9 @@ declare type HitboxStatsProps = {
 	baseKnockback: number;
 	bodyX: number;
 	bodyY: number;
+	buryTimeBase: number;
+	buryTimeScaling: number;
+	buryType: number;
 	cameraShakeType: number;
 	damage: number;
 	directionalInfluence: boolean;
@@ -858,7 +864,7 @@ declare class GameObject extends Entity {
 	updateAnimationStats(stats: AnimationStatsProps): void;
 	getAnimationStatsMetadata(): any;
 	updateAnimationStatsMetadata(stats: any): void;
-	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
+	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
 	/**
 	 * Returns the first grabbed foe in the grabbed foes array.
 	 * @return The gameObjectApi object representing the grabbed foe.
@@ -1124,6 +1130,7 @@ declare interface Match extends IApiObject, TMatch {
 
 declare interface TMatch {
 	overtimeCount: number;
+	firstBloodCalled: boolean;
 	/**
 	 * Check if last 2 players and at their final stock
 	 * @return Bool
@@ -1739,6 +1746,7 @@ declare type CState = TCState & {
 	HELD: number;
 	KO: number;
 	EMOTE: number;
+	BURIED: number;
 	/**
 	 * Translates constant to a user-readable string.
 	 */
@@ -1844,6 +1852,7 @@ declare type TCState = {
 	HELD: number;
 	KO: number;
 	EMOTE: number;
+	BURIED: number;
 	AIRDASH_DELAY: number;
 	AIRDASH_INITIAL: number;
 	AIRDASH_ACCELERATING: number;
@@ -2638,6 +2647,18 @@ declare interface CharacterStats extends GameObjectStats, TCharacterStats {
 	 * The behaviour of performing GRAB while midair
 	 */
 	grabAirType: number;
+	/**
+	 * The animation the character will use when buried.
+	 */
+	buryAnimation: string;
+	/**
+	 * The frame of the buryAnimation to be used while buried.
+	 */
+	buryFrame: number;
+	/**
+	 * Vertical offset for the bury animation, relative to their ECB's vertical midpoint.
+	 */
+	buryOffsetY: number;
 }
 
 declare interface TCharacterStats {
@@ -2745,7 +2766,7 @@ declare interface TCharacterStats {
 }
 
 declare interface HitboxStats extends JSONClass, THitboxStats {
-	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
+	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
 	/**
 	 * The numerical index of the hitbox that can be used to identify which hitbox was involved in a hit.
 	 */
@@ -2907,6 +2928,19 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 	 * Number of frames to delay the application of knockbackCap. When negative or zero, knockbackCap is immediately applied. When 1, the cap will be applied on the next frame.
 	 */
 	knockbackCapDelay: number;
+	/**
+	 * Bury settings. Only affects Characters.
+	 * @see BuryType
+	 */
+	buryType: number;
+	/**
+	 * Base amount of frames a buried target will stay buried for.
+	 */
+	buryTimeBase: number;
+	/**
+	 * Amount of extra frames a buried target will stay buried for; a scaling applied to the target's percent.
+	 */
+	buryTimeScaling: number;
 	/**
 	 * Additional metadata.
 	 */
@@ -4171,6 +4205,22 @@ declare class BodyStatusColor {
 	static readonly AUTO: number;
 }
 
+declare class BuryType {
+	protected constructor();
+	/**
+	 * The attack will not induce a bury state.
+	 */
+	static readonly NONE: number;
+	/**
+	 * The attack will induce bury if the target is on the ground.
+	 */
+	static readonly BURY: number;
+	/**
+	 * The attack will induce bury if the target is on the ground, or will induce bury on their next ground touch while in hitstun.
+	 */
+	static readonly PLUNGE: number;
+}
+
 declare class StrongInputType {
 	protected constructor();
 	static readonly RIGHT_STRONG: number;
@@ -4683,6 +4733,10 @@ declare class ControlsObject extends ASerializable {
 	 */
 	getAngle(rightStick: boolean): number;
 	syncStickAngles(): void;
+	/**
+	 * Ensure the directional buttons correspond with any stick angle
+	 */
+	syncStickButtons(): void;
 	/**
 	 * Returns a user readable string of current inputs
 	 * @return String representing all inputs that are currently held
