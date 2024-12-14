@@ -32,6 +32,7 @@ declare type GraphicsSettingsProps = {
 }
 
 declare type AssistAnimationStatsProps = {
+	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
 	autoRotate: boolean;
@@ -39,7 +40,9 @@ declare type AssistAnimationStatsProps = {
 	bodyStatusStrength: number;
 	chargeFramesMax: number;
 	chargeFramesTotal: number;
+	colorAdjustableBodyStatuses: number;
 	endType: number;
+	friction: number;
 	grabLimit: number;
 	gravityMultiplier: number;
 	groundSpeedAcceleration: number;
@@ -107,6 +110,7 @@ declare type AssistStatsProps = {
 }
 
 declare type CharacterAnimationStatsProps = {
+	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
 	allowFastFall: boolean;
@@ -123,8 +127,10 @@ declare type CharacterAnimationStatsProps = {
 	chargeFramesTotal: number;
 	chargeGlow: boolean;
 	chargeShake: boolean;
+	colorAdjustableBodyStatuses: number;
 	doubleJumpCancel: boolean;
 	endType: number;
+	friction: number;
 	grabLedgeBehind: boolean;
 	grabLimit: number;
 	gravityMultiplier: number;
@@ -322,6 +328,7 @@ declare type HitboxStatsProps = {
 }
 
 declare type ItemAnimationStatsProps = {
+	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
 	autoRotate: boolean;
@@ -329,7 +336,9 @@ declare type ItemAnimationStatsProps = {
 	bodyStatusStrength: number;
 	chargeFramesMax: number;
 	chargeFramesTotal: number;
+	colorAdjustableBodyStatuses: number;
 	endType: number;
+	friction: number;
 	grabLimit: number;
 	gravityMultiplier: number;
 	groundSpeedAcceleration: number;
@@ -395,6 +404,7 @@ declare type ItemStatsProps = {
 }
 
 declare type ProjectileAnimationStatsProps = {
+	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
 	autoRotate: boolean;
@@ -402,7 +412,9 @@ declare type ProjectileAnimationStatsProps = {
 	bodyStatusStrength: number;
 	chargeFramesMax: number;
 	chargeFramesTotal: number;
+	colorAdjustableBodyStatuses: number;
 	endType: number;
+	friction: number;
 	grabLimit: number;
 	gravityMultiplier: number;
 	groundSpeedAcceleration: number;
@@ -491,6 +503,7 @@ declare type PlayerBorder = {
 }
 
 declare type AnimationStatsProps = {
+	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
 	autoRotate: boolean;
@@ -498,7 +511,9 @@ declare type AnimationStatsProps = {
 	bodyStatusStrength: number;
 	chargeFramesMax: number;
 	chargeFramesTotal: number;
+	colorAdjustableBodyStatuses: number;
 	endType: number;
+	friction: number;
 	grabLimit: number;
 	gravityMultiplier: number;
 	groundSpeedAcceleration: number;
@@ -945,6 +960,7 @@ declare class Assist extends CustomGameObject {
 declare class CustomApiObject extends ApiObject {
 	getOwner(): ApiObject;
 	setOwner(owner: ApiObject): void;
+	getResource(): Resource;
 	kill(): void;
 }
 
@@ -1096,6 +1112,8 @@ declare interface Match extends IApiObject, TMatch {
 	globals: any;
 	isReplay(): boolean;
 	getMatchSettingsConfig(): MatchSettingsConfig;
+	addTimer(interval: number, repeats: number, func: () => void, options?: {condition?: () => boolean, inverseCondition?: () => boolean, pauseCondition?: () => boolean, persistent?: boolean}): number;
+	removeTimer(uid: number): boolean;
 	addEventListener(type: number, func: any, options?: {persistent?: boolean}): void;
 	hasEventListener(type: number, func?: any): boolean;
 	removeEventListener(type: number, func: any): void;
@@ -2180,6 +2198,10 @@ declare class AnimationStats extends JSONClass {
 	 */
 	groundSpeedAcceleration: number;
 	/**
+	 * Ground friction override for this animation. Resorts to GameObject friction stat when set to a negative value.
+	 */
+	friction: number;
+	/**
 	 * Air speed acceleration override for this animation. Resorts to default aerialSpeedAcceleration GameObject stat when set to a negative value.
 	 */
 	aerialSpeedAcceleration: number;
@@ -2191,6 +2213,10 @@ declare class AnimationStats extends JSONClass {
 	 * Maximum air speed limit override for this animation. Resorts to default aerialSpeedCap GameObject stat when set to a negative value.
 	 */
 	aerialSpeedCap: number;
+	/**
+	 * Aerial friction override for this animation. Resorts to default aerialFriction GameObject stat when set to a negative value.
+	 */
+	aerialFriction: number;
 	/**
 	 * Terminal velocity override for this animation. Resorts to default terminalVelocity GameObject stat when set to a negative value.
 	 */
@@ -2211,6 +2237,10 @@ declare class AnimationStats extends JSONClass {
 	 * Not to be set directly - tracks the previously stored charge percentage
 	 */
 	storedChargePercent: number;
+	/**
+	 * Chooses which body statuses are allowed to change the GameObject color.
+	 */
+	colorAdjustableBodyStatuses: number;
 	/**
 	 * Clean resets the animation stats. Since animation stats are constantly being re-imported, this provides a faster way to restore defaults before importing new stats.
 	 */
@@ -3752,6 +3782,8 @@ declare class Stage extends ApiObject {
 	getForegroundFrontContainer(): Container;
 	getDeathBounds(): RectCollisionArea;
 	getCameraBounds(): RectCollisionArea;
+	addTimer(interval: number, repeats: number, func: () => void, options?: {condition?: () => boolean, inverseCondition?: () => boolean, pauseCondition?: () => boolean, persistent?: boolean}): number;
+	removeTimer(uid: number): boolean;
 	addEventListener(type: number, func: any, options?: {persistent?: boolean}): void;
 	hasEventListener(type: number, func?: any): boolean;
 	removeEventListener(type: number, func: any): void;
@@ -3928,6 +3960,10 @@ declare class BodyStatus {
 	 * Prevents damage and flinching up to the amount of knockback velocity specified by the bodyStatusStrength AnimationStats field. Attacking foes will still receive selfHitstop, and if the threshold is exceeded the amount of knockback velocity received will be reduced by the amount specified by bodyStatusStrength.
 	 */
 	static readonly LAUNCH_RESISTANCE: number;
+	/**
+	 * All body statuses will be applied.
+	 */
+	static readonly ALL: number;
 }
 
 declare class AttackElement {
@@ -4574,6 +4610,9 @@ declare class StructureEvent extends CustomEvent {
 }
 
 declare class LobbyEvent extends CustomEvent {
+	/**
+	 * Contains additional data about the lobby event.
+	 */
 	readonly data: {data?: any, desyncFrame?: number, lobbies?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}[], lobby?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}, lobbyMatchData?: {matchConfig: {damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, message?: string, ping?: number, pingMax?: number, pingMin?: number, playerConnectionInfo?: any, playerConnectionInfos?: any[], uid?: string};
 	static readonly CONNECT: number;
 	static readonly DISCONNECT: number;

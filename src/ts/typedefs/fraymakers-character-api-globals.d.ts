@@ -91,7 +91,7 @@ declare interface Common {
   onButtonsHeld(buttons:number, callback:() => void):void;
 
   /**
-   * Helper method for triggering a callback when a combination of buttons are released. Supports checking multiple buttons using bitwise operations.
+   * Helper method for triggering a callback when a combination of buttons are released. Supports checking multiple buttons using bitwise operations. Do not call this function multiple times within the same animation, as its implementation relies on a shared store to remember any previously held buttons.
    * @param buttons The button(s) to listen for (See Buttons class).
    * @param callback The method to execute when the buttons are released.
    * @returns Reference to the timer uid so the timer may be removed via self.removeTimer().
