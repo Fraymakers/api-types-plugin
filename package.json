@@ -1,6 +1,6 @@
 {
   "name": "@fraymakers/api-types-plugin",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Source code for the Fraymakers Api Types Plugin for FrayTools.",
   "private": true,
   "repository": {

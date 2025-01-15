@@ -298,6 +298,7 @@ declare type HitboxStatsProps = {
 	forceTumbleFall: boolean;
 	hitEffectOverride: string;
 	hitSoundOverride: string;
+	hitSoundOverrideArray: string[];
 	hitstop: number;
 	hitstopMultiplier: number;
 	hitstopNudgeMultiplier: number;
@@ -879,7 +880,7 @@ declare class GameObject extends Entity {
 	updateAnimationStats(stats: AnimationStatsProps): void;
 	getAnimationStatsMetadata(): any;
 	updateAnimationStatsMetadata(stats: any): void;
-	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
+	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitSoundOverrideArray?: string[], hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
 	/**
 	 * Returns the first grabbed foe in the grabbed foes array.
 	 * @return The gameObjectApi object representing the grabbed foe.
@@ -2796,7 +2797,7 @@ declare interface TCharacterStats {
 }
 
 declare interface HitboxStats extends JSONClass, THitboxStats {
-	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
+	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitSoundOverrideArray?: string[], hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
 	/**
 	 * The numerical index of the hitbox that can be used to identify which hitbox was involved in a hit.
 	 */
@@ -2873,6 +2874,10 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 	 * Instead of using the automatic hitsound calc (uses element and hitstrength).
 	 */
 	hitSoundOverride: string;
+	/**
+	 * Instead of using the automatic hitsound calc or sound override, plays random sound id from array.
+	 */
+	hitSoundOverrideArray: string[];
 	/**
 	 * Use a custom hit Vfx. By default, the engine assumes this is an animation name from from the GlobalVfx sprite (See GlobalVfx constnats). You can however use other Vfx animations by specifying the full content id of the Vfx sprite followed by a hash "#" specifying the animation you want to play. (e.g. "namespace::resource.spriteId#animationId")
 	 */
