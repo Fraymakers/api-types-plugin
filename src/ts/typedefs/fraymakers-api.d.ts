@@ -48,6 +48,7 @@ declare type AssistAnimationStatsProps = {
 	groundSpeedAcceleration: number;
 	groundSpeedCap: number;
 	immovable: boolean;
+	interruptible: boolean;
 	landAnimation: string;
 	landType: number;
 	leaveGroundCancel: boolean;
@@ -137,6 +138,7 @@ declare type CharacterAnimationStatsProps = {
 	groundSpeedAcceleration: number;
 	groundSpeedCap: number;
 	immovable: boolean;
+	interruptible: boolean;
 	landAnimation: string;
 	landType: number;
 	leaveGroundAnimation: string;
@@ -235,6 +237,7 @@ declare type CharacterStatsProps = {
 	jumpSpeedForwardInitialXSpeed: number;
 	koVoiceIds: string[];
 	koVoiceSilenceRate: number;
+	ledgeActionOccupancyTime: number;
 	ledgeJumpXSpeed: number;
 	ledgeJumpYSpeed: number;
 	ledgeRollSpeed: number;
@@ -345,6 +348,7 @@ declare type ItemAnimationStatsProps = {
 	groundSpeedAcceleration: number;
 	groundSpeedCap: number;
 	immovable: boolean;
+	interruptible: boolean;
 	landAnimation: string;
 	landType: number;
 	leaveGroundCancel: boolean;
@@ -421,6 +425,7 @@ declare type ProjectileAnimationStatsProps = {
 	groundSpeedAcceleration: number;
 	groundSpeedCap: number;
 	immovable: boolean;
+	interruptible: boolean;
 	landAnimation: string;
 	landType: number;
 	leaveGroundCancel: boolean;
@@ -520,6 +525,7 @@ declare type AnimationStatsProps = {
 	groundSpeedAcceleration: number;
 	groundSpeedCap: number;
 	immovable: boolean;
+	interruptible: boolean;
 	landAnimation: string;
 	landType: number;
 	leaveGroundCancel: boolean;
@@ -816,7 +822,7 @@ declare class Entity extends ApiObject {
 	sendBehind(gameObject: GameObject): void;
 	swapDepths(gameObject: GameObject): void;
 	hitTestEntity(otherEntity: Entity, selfCollisionBoxType: number, otherCollisionBoxType: number, options?: {bailEarly?: boolean, callback?: (arg0: any, arg1: CollisionResult) => boolean}): CollisionResult[];
-	hitTestStructuresWithLineSegment(point1: Point, point2: Point, intersectionOut: Point, options: {collisionCheckType?: number, collisionValidator?: (physics: any, structureCollider: any, structure: any, structureType: number, collisionCheckType: number) => boolean, directionality?: boolean, excludeList?: any[], includeDisabled?: boolean, includeList?: any[], requireRicochet?: boolean, structureType?: number}): Structure[];
+	hitTestStructuresWithLineSegment(point1: Point, point2: Point, intersectionOut: Point, options: {collisionCheckType?: number, collisionValidator?: (physics: any, structureCollider: any, structure: any, structureType: number, collisionCheckType: number) => boolean, directionality?: boolean, excludeList?: any[], includeAttached?: boolean, includeDisabled?: boolean, includeList?: any[], requireRicochet?: boolean, structureType?: number}): Structure[];
 	getCollisionBoxes(boxType: number): CollisionBox[];
 	/**
 	 * Takes in a group of entities, extracts their collision data, and then tests that collision data against another entity as if the collision data belonged to this
@@ -956,6 +962,11 @@ declare class CustomGameObject extends GameObject {
 
 declare class Assist extends CustomGameObject {
 	getPortColor(): number;
+	/**
+	 * Use to update assist stats
+	 * @param stats
+	 */
+	updateAssistStats(stats: AssistStatsProps): void;
 }
 
 declare class CustomApiObject extends ApiObject {
@@ -1110,6 +1121,7 @@ declare interface TCharacter {
 	setAssistCutinAnimation(animation: string): void;
 	getAssistCharge(): number;
 	setAssistCharge(value: number): void;
+	getAssists(): Assist[];
 	getAirdashCount(): number;
 	setAirdashCount(count: number): number;
 	inAirdashCanceledAnimation(): boolean;
@@ -2622,6 +2634,10 @@ declare interface CharacterStats extends GameObjectStats, TCharacterStats {
 	 */
 	ledgeRollSpeedLength: number;
 	/**
+	 * How long a character occupies a ledge when performing ledge actions.
+	 */
+	ledgeActionOccupancyTime: number;
+	/**
 	 * Character's initial walk speed.
 	 */
 	walkSpeedInitial: number;
@@ -3224,7 +3240,7 @@ declare interface PlayerConfig extends JSONClass, TPlayerConfig {
  * These override values given in the MatchConfig.
  */
 declare interface TPlayerConfig {
-	new(settings: {assist?: {contentId: string, namespace: string, resourceId: string}, assistBorder?: PlayerBorder, assistCostume?: number, attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startAssistCharge?: number, startDamage?: number, team?: number, unlimitedAssist?: boolean});
+	new(settings: {assist?: {contentId: string, namespace: string, resourceId: string}, assistBorder?: PlayerBorder, assistCostume?: number, attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, hasRandomAssist?: boolean, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startAssistCharge?: number, startDamage?: number, team?: number, unlimitedAssist?: boolean});
 	/**
 	 * The content/resource ID of the assist to load for the player. If set to null, this assist slot will be considered empty.
 	 */
@@ -3241,6 +3257,10 @@ declare interface TPlayerConfig {
 	 * Unlimited final strongs?
 	 */
 	unlimitedAssist: boolean;
+	/**
+	 * Returns true if the assist was randomly selected.
+	 */
+	hasRandomAssist: boolean;
 	/**
 	 * Specify a border to show on this assist
 	 */
@@ -3846,6 +3866,7 @@ declare class Stage extends ApiObject {
 	getForegroundFrontContainer(): Container;
 	getDeathBounds(): RectCollisionArea;
 	getCameraBounds(): RectCollisionArea;
+	getCameraAnchors(): RectCollisionArea[];
 	addTimer(interval: number, repeats: number, func: () => void, options?: {condition?: () => boolean, inverseCondition?: () => boolean, pauseCondition?: () => boolean, persistent?: boolean}): number;
 	removeTimer(uid: number): boolean;
 	addEventListener(type: number, func: any, options?: {persistent?: boolean}): void;
