@@ -1,5 +1,5 @@
 {
-  "version": "0.3.9",
+  "version": "0.3.10",
   "type": "TypeDefinitionPlugin",
   "id": "com.fraymakers.FraymakersTypes",
   "name": "Fraymakers API Types",
