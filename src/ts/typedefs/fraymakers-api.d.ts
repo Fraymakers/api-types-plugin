@@ -487,6 +487,35 @@ declare type ProjectileStatsProps = {
 	weight: number;
 }
 
+/**
+ * A raw object containing parameters that configures the settings of a Match.
+ * Any player-affecting parameters will be overridden by the PlayerConfigProps.
+ */
+declare type PlayerConfigProps = {
+	assist: {contentId: string, namespace: string, resourceId: string};
+	assistBorder: PlayerBorder;
+	assistCostume: number;
+	attackRatio: number;
+	character: {contentId: string, namespace: string, resourceId: string};
+	clientUid: string;
+	costume: number;
+	cpu: boolean;
+	damageMode: boolean;
+	damageRatio: number;
+	hasRandomAssist: boolean;
+	isRandom: boolean;
+	level: number;
+	lives: number;
+	metadata: any;
+	name: string;
+	playerBorder: PlayerBorder;
+	port: number;
+	startAssistCharge: number;
+	startDamage: number;
+	team: number;
+	unlimitedAssist: boolean;
+}
+
 declare type PlaySoundArgs = {
 	autoPrefixByResource: boolean;
 	autoPrefixResource: Resource;
@@ -1118,6 +1147,31 @@ declare interface TCharacter {
 	getAssistController(): AssistController;
 	getAssistContentStat(name: string): any;
 	getDamageCounterAssistSprite(): Sprite;
+	/**
+	 * Sets the  display name on the damage counter
+	 * @param name the new display name
+	 */
+	setDamageCounterName(name: string): void;
+	/**
+	 * Gets the current display name on the damage counter
+	 * @return String the current display name
+	 */
+	getDamageCounterName(): string;
+	/**
+	 * Gets the default damage counter display name
+	 * @return String the default display name
+	 */
+	getDefaultDamageCounterName(): string;
+	/**
+	 * Returns the stock icon sprites.
+	 * The array `icons` corresponds to the sprites for te first four stocks
+	 * and `compactIcon` corresponds to the sprite displayed when at 5 or more stocks.
+	 */
+	getStockIconSprites(): {compactIcon: Sprite, icons: Sprite[]};
+	/**
+	 * Returns the character sprite displayed on the front layer of the damage counter
+	 */
+	getDamageCounterRenderSpriteFront(): Sprite;
 	setAssistCutinAnimation(animation: string): void;
 	getAssistCharge(): number;
 	setAssistCharge(value: number): void;
@@ -1156,6 +1210,7 @@ declare interface Match extends IApiObject, TMatch {
 	getStructures(): Structure[];
 	getCollisionAreaByName(name: string): CollisionArea;
 	getStructureByName(name: string): Structure;
+	getCamera(): Camera;
 	createSpriteStructure(sprite: Sprite): Structure;
 	createStructure(structureContent: string): Structure;
 	createLineSegmentStructure(points: number[], stats?: StructureStats): CustomLineSegmentStructure;
@@ -1507,6 +1562,7 @@ declare class AiHitstopNudgeOption {
 
 declare class StructureType {
 	protected constructor();
+	static isWall(structureType: number): boolean;
 	static readonly NONE: number;
 	static readonly LEFT_WALL: number;
 	static readonly RIGHT_WALL: number;
@@ -3161,7 +3217,7 @@ declare interface PlayerConfig extends JSONClass, TPlayerConfig {
 	 * A class containing parameters that configures the default settings of a Match.
 	 * Any player-affecting parameters will be overridden by the PlayerConfig.
 	 */
-	constructor(settings: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number});
+	constructor(settings: PlayerConfigProps);
 	/**
 	 * Player Port #
 	 */
@@ -3240,7 +3296,7 @@ declare interface PlayerConfig extends JSONClass, TPlayerConfig {
  * These override values given in the MatchConfig.
  */
 declare interface TPlayerConfig {
-	new(settings: {assist?: {contentId: string, namespace: string, resourceId: string}, assistBorder?: PlayerBorder, assistCostume?: number, attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, hasRandomAssist?: boolean, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startAssistCharge?: number, startDamage?: number, team?: number, unlimitedAssist?: boolean});
+	new(settings: PlayerConfigProps);
 	/**
 	 * The content/resource ID of the assist to load for the player. If set to null, this assist slot will be considered empty.
 	 */
@@ -3424,6 +3480,19 @@ declare class Camera extends ApiObject {
 	getBackgroundContainer(): Container;
 	getForegroundContainer(): Container;
 	getParallaxSprites(): Sprite[];
+	/**
+	 * Set the camera to a locked position. This is only used when the camera is in locked mode.
+	 * @param x The x coordinate of the locked position
+	 * @param y The y coordinate of the locked position
+	 */
+	setLockedPosition(x: number, y: number): void;
+	/**
+	 * Set the camera to a specific zoom amount. Forces the camera into zoom mode if not already in zoom or locked modes.
+	 * 1x zoom is the default, and 0.5x zoom is zoomed out to show twice the area.
+	 * @param zoomX The x zoom factor to apply to the camera
+	 * @param zoomY The y zoom factor to apply to the camera
+	 */
+	setLockedZoom(zoomX: number, zoomY: number): void;
 	isDisposed(): boolean;
 }
 
@@ -3755,6 +3824,12 @@ declare class RgbaColorShader extends Shader {
 declare class RibbonTrail extends Drawable {
 	points: TPoint[];
 	movingRatio: number;
+	/**
+	 * When in anchored reveal mode, the ribbon is incrementally revealed based on the number of segments.
+	 * The reveal starts from the initial position, and continues as the position is updated.
+	 * Once the entire ribbon is visible, the entire trail moves along with the updated positions.
+	 */
+	useAnchoredReveal: boolean;
 	alphaRatio: number;
 	heightScale: number;
 	updatePosition(x: number, y: number): void;
@@ -3815,6 +3890,10 @@ declare class Score extends ApiObject {
 	multiKills: number[];
 }
 
+declare class SolidColorShader extends Shader {
+	color: number;
+}
+
 declare class Sprite extends Drawable {
 	hasAnimation(animation: string): boolean;
 	goToFrameLabel(label: string): void;
@@ -3864,6 +3943,11 @@ declare class Stage extends ApiObject {
 	getForegroundShadowsContainer(): Container;
 	getForegroundEffectsContainer(): Container;
 	getForegroundFrontContainer(): Container;
+	/**
+	 * Get the container in which match graphics are rendered in.
+	 * This container is layered above the hud and all stage/camera layers.
+	 */
+	getMatchGraphicsContainer(): Container;
 	getDeathBounds(): RectCollisionArea;
 	getCameraBounds(): RectCollisionArea;
 	getCameraAnchors(): RectCollisionArea[];
@@ -3881,6 +3965,19 @@ declare class Stage extends ApiObject {
 
 declare class StatsFile {
 	getResource(): Resource;
+}
+
+/**
+ * A subset of the standard Haxe Std class
+ * @see https://api.haxe.org/Std.html
+ */
+declare class Std {
+	protected constructor();
+	static int(value: number): number;
+	static isOfType(obj: any, t: any): boolean;
+	static parseFloat(value: string): number;
+	static parseInt(value: string): number;
+	static string(value: any): string;
 }
 
 declare class StringMap {
@@ -4131,6 +4228,20 @@ declare class IState {
 	static readonly UNINITIALIZED: number;
 	static readonly ACTIVE: number;
 	static readonly DESTROYING: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	static constToString(value: number): string;
+}
+
+declare class CameraMode {
+	protected constructor();
+	static readonly NORMAL: number;
+	static readonly ZOOM: number;
+	static readonly STAGE: number;
+	static readonly LOCKED: number;
+	static readonly FREE: number;
+	static readonly SCALE: number;
 	/**
 	 * Translates constant to a user-readable string.
 	 */
@@ -4698,7 +4809,7 @@ declare class LobbyEvent extends CustomEvent {
 	/**
 	 * Contains additional data about the lobby event.
 	 */
-	readonly data: {data?: any, desyncFrame?: number, lobbies?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageDisplay?: boolean, damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}[], lobby?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageDisplay?: boolean, damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}, lobbyMatchData?: {matchConfig: {damageDisplay?: boolean, damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: {attackRatio?: number, character?: {contentId: string, namespace: string, resourceId: string}, clientUid?: string, costume?: number, cpu?: boolean, damageMode?: boolean, damageRatio?: number, isRandom?: boolean, level?: number, lives?: number, metadata?: any, name?: string, playerBorder?: PlayerBorder, port?: number, startDamage?: number, team?: number}[]}, message?: string, ping?: number, pingMax?: number, pingMin?: number, playerConnectionInfo?: any, playerConnectionInfos?: any[], uid?: string};
+	readonly data: {data?: any, desyncFrame?: number, lobbies?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageDisplay?: boolean, damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: PlayerConfigProps[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}[], lobby?: {capacity: number, hasPassword: boolean, kind: number, matchmakingGroup: number, members: number, metadata?: any, name: string, owner: string, protocol: number, region: number, regionRestricted: boolean, score: number, sessionData: {matchData: {matchConfig: {damageDisplay?: boolean, damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: PlayerConfigProps[]}, metadata: any, mode: {contentId: string, namespace: string, resourceId: string}}, uid: string, version: string}, lobbyMatchData?: {matchConfig: {damageDisplay?: boolean, damageMode?: boolean, damageRatio?: number, entrances?: boolean, hazards?: boolean, lives?: number, matchRules?: {contentId: string, namespace: string, resourceId: string}[], metadata?: any, music?: {contentId: string, namespace: string, resourceId: string}, netcodeInputBuffer?: number, netcodeType?: number, pauseMenuId?: string, playerIDs?: boolean, preloadMediaMap?: any, randSeed?: string, sizeRatio?: number, specialModes?: number, stage?: {contentId: string, namespace: string, resourceId: string}, startDamage?: number, teamAttack?: boolean, teams?: boolean, time?: number}, playerConfigs: PlayerConfigProps[]}, message?: string, ping?: number, pingAck?: number, pingMax?: number, pingMin?: number, playerConnectionInfo?: any, playerConnectionInfos?: any[], uid?: string};
 	static readonly CONNECT: number;
 	static readonly DISCONNECT: number;
 	static readonly LOGIN: number;
