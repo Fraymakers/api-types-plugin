@@ -909,15 +909,10 @@ declare class GameObject extends Entity {
 	getStatusEffectByType(type: number): StatusEffect;
 	resume(): void;
 	pause(): void;
-	setXVelocity(speed: number): number;
-	setYVelocity(speed: number): number;
 	setXSpeedScaled(speed: number): number;
 	setYSpeedScaled(speed: number): number;
-	setXSpeed(speed: number): number;
-	setYSpeed(speed: number): number;
 	setXVelocityScaled(velocity: number): number;
 	setYVelocityScaled(velocity: number): number;
-	move(x: number, y: number): void;
 	moveScaled(x: number, y: number): void;
 	getDamage(): number;
 	addDamage(dmg: number): number;
@@ -1073,6 +1068,23 @@ declare class CharacterAiScript extends ApiObject {
 	addInputOverrides(inputList: number[]): void;
 	hasInputOverrides(): boolean;
 	clearInputOverrides(): void;
+	/**
+	 * Returns true if an action is enabled for the built-in AI
+	 * @param action
+	 * @see CharacterAiActions
+	 */
+	disableAction(action: number): void;
+	/**
+	 * Enables an action for use by the built-in AI
+	 * @param action the action to enable
+	 * @see CharacterAiActions
+	 */
+	enableAction(action: number): void;
+	/**
+	 * Returns true of the given action is enabled
+	 * @see CharacterAiActions
+	 */
+	isActionEnabled(action: number): boolean;
 }
 
 declare interface Character extends GameObject, TCharacter {
@@ -1364,7 +1376,7 @@ declare class GraphicsSettings {
 }
 
 declare class MatchModifier {
-	constructor();
+	protected constructor();
 	static SLOW: number;
 	static FAST: number;
 	static LIGHT: number;
@@ -1707,6 +1719,257 @@ declare class TPoint {
 	static lineSegmentsIntersect(a0: TPoint, a1: TPoint, b0: TPoint, b1: TPoint, out?: TPoint): TPoint;
 }
 
+declare var CharacterAiActions:CharacterAiActions;
+declare type CharacterAiActions = TCharacterAiActions & {
+	constructor();
+	JAB: number;
+	DASH_ATTACK: number;
+	TILT_FORWARD: number;
+	TILT_UP: number;
+	TILT_DOWN: number;
+	STRONG_FORWARD: number;
+	STRONG_UP: number;
+	STRONG_DOWN: number;
+	AERIAL_NEUTRAL: number;
+	AERIAL_BACK: number;
+	AERIAL_FORWARD: number;
+	AERIAL_UP: number;
+	AERIAL_DOWN: number;
+	SPECIAL_NEUTRAL: number;
+	SPECIAL_SIDE: number;
+	SPECIAL_UP: number;
+	SPECIAL_DOWN: number;
+	SPECIAL_NEUTRAL_AIR: number;
+	SPECIAL_SIDE_AIR: number;
+	SPECIAL_UP_AIR: number;
+	SPECIAL_DOWN_AIR: number;
+	GRAB: number;
+	THROW_UP: number;
+	THROW_DOWN: number;
+	THROW_FORWARD: number;
+	THROW_BACK: number;
+	DOUBLE_JUMP: number;
+	SHORT_HOP: number;
+	FULL_HOP: number;
+	SPECIAL_LEFT: number;
+	SPECIAL_RIGHT: number;
+	DASH_ATTACK_LEFT: number;
+	DASH_ATTACK_RIGHT: number;
+	THROW_LEFT: number;
+	THROW_RIGHT: number;
+	TILT_LEFT: number;
+	TILT_RIGHT: number;
+	STRONG_LEFT: number;
+	STRONG_RIGHT: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
+}
+
+declare type TCharacterAiActions = {
+	constructor();
+	JAB: number;
+	DASH_ATTACK: number;
+	TILT_FORWARD: number;
+	TILT_UP: number;
+	TILT_DOWN: number;
+	STRONG_FORWARD: number;
+	STRONG_UP: number;
+	STRONG_DOWN: number;
+	AERIAL_NEUTRAL: number;
+	AERIAL_BACK: number;
+	AERIAL_FORWARD: number;
+	AERIAL_UP: number;
+	AERIAL_DOWN: number;
+	SPECIAL_NEUTRAL: number;
+	SPECIAL_SIDE: number;
+	SPECIAL_UP: number;
+	SPECIAL_DOWN: number;
+	SPECIAL_NEUTRAL_AIR: number;
+	SPECIAL_SIDE_AIR: number;
+	SPECIAL_UP_AIR: number;
+	SPECIAL_DOWN_AIR: number;
+	GRAB: number;
+	THROW_UP: number;
+	THROW_DOWN: number;
+	THROW_FORWARD: number;
+	THROW_BACK: number;
+	DOUBLE_JUMP: number;
+	SHORT_HOP: number;
+	FULL_HOP: number;
+	SPECIAL_LEFT: number;
+	SPECIAL_RIGHT: number;
+	DASH_ATTACK_LEFT: number;
+	DASH_ATTACK_RIGHT: number;
+	THROW_LEFT: number;
+	THROW_RIGHT: number;
+	TILT_LEFT: number;
+	TILT_RIGHT: number;
+	STRONG_LEFT: number;
+	STRONG_RIGHT: number;
+	AIRDASH: number;
+	AIRDASH_FORWARD: number;
+	AIRDASH_FORWARD_UP: number;
+	AIRDASH_FORWARD_DOWN: number;
+	AIRDASH_BACK: number;
+	AIRDASH_BACK_UP: number;
+	AIRDASH_BACK_DOWN: number;
+	AIRDASH_DOWN: number;
+	AIRDASH_UP: number;
+	ASSIST: number;
+	AIRDASH_RIGHT: number;
+	AIRDASH_RIGHT_UP: number;
+	AIRDASH_RIGHT_DOWN: number;
+	AIRDASH_LEFT: number;
+	AIRDASH_LEFT_UP: number;
+	AIRDASH_LEFT_DOWN: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
+}
+
+declare var CState:CState;
+declare type CState = TCState & {
+	constructor();
+	UNINITIALIZED: number;
+	DISABLED: number;
+	STAND: number;
+	STAND_TURN: number;
+	INTRO: number;
+	REVIVAL: number;
+	WALK_IN: number;
+	WALK_LOOP: number;
+	WALK_OUT: number;
+	DASH: number;
+	DASH_PIVOT: number;
+	RUN: number;
+	RUN_TURN: number;
+	SKID: number;
+	JUMP_SQUAT: number;
+	JUMP_IN: number;
+	JUMP_LOOP: number;
+	JUMP_OUT: number;
+	JUMP_MIDAIR: number;
+	FALL: number;
+	FALL_SPECIAL: number;
+	LAND: number;
+	CROUCH_IN: number;
+	CROUCH_LOOP: number;
+	CROUCH_OUT: number;
+	CRAWL_FORWARD: number;
+	CRAWL_BACK: number;
+	LEDGE_IN: number;
+	LEDGE_LOOP: number;
+	LEDGE_CLIMB_IN: number;
+	LEDGE_CLIMB: number;
+	LEDGE_ROLL_CLIMB: number;
+	LEDGE_ROLL: number;
+	LEDGE_JUMP_IN: number;
+	LEDGE_JUMP: number;
+	LEDGE_ATTACK_IN: number;
+	LEDGE_ATTACK: number;
+	SHIELD_IN: number;
+	SHIELD_LOOP: number;
+	SHIELD_OUT: number;
+	SHIELD_BREAK: number;
+	SHIELD_HURT: number;
+	SHIELD_AIR: number;
+	ROLL: number;
+	SPOT_DODGE: number;
+	TECH: number;
+	TECH_ROLL: number;
+	TECH_WALL: number;
+	TECH_CEILING: number;
+	PARRY_IN: number;
+	PARRY_FAIL: number;
+	PARRY_SUCCESS: number;
+	HURT_LIGHT: number;
+	HURT_MEDIUM: number;
+	HURT_HEAVY: number;
+	HURT_HEAVY_HITSTOP: number;
+	HURT_PARRY_STUN: number;
+	TUMBLE: number;
+	CRASH_BOUNCE: number;
+	CRASH_LOOP: number;
+	CRASH_ATTACK: number;
+	CRASH_ROLL: number;
+	CRASH_GET_UP: number;
+	JAB: number;
+	DASH_ATTACK: number;
+	TILT_FORWARD: number;
+	TILT_UP: number;
+	TILT_DOWN: number;
+	STRONG_FORWARD_IN: number;
+	STRONG_FORWARD_CHARGE: number;
+	STRONG_FORWARD_ATTACK: number;
+	STRONG_UP_IN: number;
+	STRONG_UP_CHARGE: number;
+	STRONG_UP_ATTACK: number;
+	STRONG_DOWN_IN: number;
+	STRONG_DOWN_CHARGE: number;
+	STRONG_DOWN_ATTACK: number;
+	AERIAL_NEUTRAL: number;
+	AERIAL_FORWARD: number;
+	AERIAL_BACK: number;
+	AERIAL_UP: number;
+	AERIAL_DOWN: number;
+	SPECIAL_NEUTRAL: number;
+	SPECIAL_SIDE: number;
+	SPECIAL_UP: number;
+	SPECIAL_DOWN: number;
+	THROW_UP: number;
+	THROW_DOWN: number;
+	THROW_FORWARD: number;
+	THROW_BACK: number;
+	ACTION: number;
+	GRAB: number;
+	GRAB_HOLD: number;
+	GRAB_PUMMEL: number;
+	HELD: number;
+	KO: number;
+	EMOTE: number;
+	WALL_CLING: number;
+	WALL_JUMP_IN: number;
+	WALL_JUMP: number;
+	BURIED: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
+}
+
+/**
+ * Wraps CState values so that equality can be checked directly
+ */
+declare class CharacterActions {
+	protected constructor();
+	static LEDGE_ATTACK: number;
+	static CRASH_ATTACK: number;
+	static JAB: number;
+	static DASH_ATTACK: number;
+	static TILT_FORWARD: number;
+	static TILT_UP: number;
+	static TILT_DOWN: number;
+	static STRONG_FORWARD: number;
+	static STRONG_UP: number;
+	static STRONG_DOWN: number;
+	static AERIAL_NEUTRAL: number;
+	static AERIAL_BACK: number;
+	static AERIAL_FORWARD: number;
+	static AERIAL_UP: number;
+	static AERIAL_DOWN: number;
+	static SPECIAL_NEUTRAL: number;
+	static SPECIAL_SIDE: number;
+	static SPECIAL_UP: number;
+	static SPECIAL_DOWN: number;
+	static THROW_UP: number;
+	static THROW_DOWN: number;
+	static THROW_FORWARD: number;
+	static THROW_BACK: number;
+}
+
 /**
  * ...
  * @author
@@ -1870,115 +2133,6 @@ declare class MatchSettingsConfig extends JSONClass {
 	 * How much additional penalty should apply for a self-destruct.
 	 */
 	selfDestructScore: number;
-}
-
-declare var CState:CState;
-declare type CState = TCState & {
-	constructor();
-	UNINITIALIZED: number;
-	DISABLED: number;
-	STAND: number;
-	STAND_TURN: number;
-	INTRO: number;
-	REVIVAL: number;
-	WALK_IN: number;
-	WALK_LOOP: number;
-	WALK_OUT: number;
-	DASH: number;
-	DASH_PIVOT: number;
-	RUN: number;
-	RUN_TURN: number;
-	SKID: number;
-	JUMP_SQUAT: number;
-	JUMP_IN: number;
-	JUMP_LOOP: number;
-	JUMP_OUT: number;
-	JUMP_MIDAIR: number;
-	FALL: number;
-	FALL_SPECIAL: number;
-	LAND: number;
-	CROUCH_IN: number;
-	CROUCH_LOOP: number;
-	CROUCH_OUT: number;
-	CRAWL_FORWARD: number;
-	CRAWL_BACK: number;
-	LEDGE_IN: number;
-	LEDGE_LOOP: number;
-	LEDGE_CLIMB_IN: number;
-	LEDGE_CLIMB: number;
-	LEDGE_ROLL_CLIMB: number;
-	LEDGE_ROLL: number;
-	LEDGE_JUMP_IN: number;
-	LEDGE_JUMP: number;
-	LEDGE_ATTACK_IN: number;
-	LEDGE_ATTACK: number;
-	SHIELD_IN: number;
-	SHIELD_LOOP: number;
-	SHIELD_OUT: number;
-	SHIELD_BREAK: number;
-	SHIELD_HURT: number;
-	SHIELD_AIR: number;
-	ROLL: number;
-	SPOT_DODGE: number;
-	TECH: number;
-	TECH_ROLL: number;
-	TECH_WALL: number;
-	TECH_CEILING: number;
-	PARRY_IN: number;
-	PARRY_FAIL: number;
-	PARRY_SUCCESS: number;
-	HURT_LIGHT: number;
-	HURT_MEDIUM: number;
-	HURT_HEAVY: number;
-	HURT_HEAVY_HITSTOP: number;
-	HURT_PARRY_STUN: number;
-	TUMBLE: number;
-	CRASH_BOUNCE: number;
-	CRASH_LOOP: number;
-	CRASH_ATTACK: number;
-	CRASH_ROLL: number;
-	CRASH_GET_UP: number;
-	JAB: number;
-	DASH_ATTACK: number;
-	TILT_FORWARD: number;
-	TILT_UP: number;
-	TILT_DOWN: number;
-	STRONG_FORWARD_IN: number;
-	STRONG_FORWARD_CHARGE: number;
-	STRONG_FORWARD_ATTACK: number;
-	STRONG_UP_IN: number;
-	STRONG_UP_CHARGE: number;
-	STRONG_UP_ATTACK: number;
-	STRONG_DOWN_IN: number;
-	STRONG_DOWN_CHARGE: number;
-	STRONG_DOWN_ATTACK: number;
-	AERIAL_NEUTRAL: number;
-	AERIAL_FORWARD: number;
-	AERIAL_BACK: number;
-	AERIAL_UP: number;
-	AERIAL_DOWN: number;
-	SPECIAL_NEUTRAL: number;
-	SPECIAL_SIDE: number;
-	SPECIAL_UP: number;
-	SPECIAL_DOWN: number;
-	THROW_UP: number;
-	THROW_DOWN: number;
-	THROW_FORWARD: number;
-	THROW_BACK: number;
-	ACTION: number;
-	GRAB: number;
-	GRAB_HOLD: number;
-	GRAB_PUMMEL: number;
-	HELD: number;
-	KO: number;
-	EMOTE: number;
-	WALL_JUMP_IN: number;
-	WALL_JUMP: number;
-	BURIED: number;
-	/**
-	 * Translates constant to a user-readable string.
-	 */
-	constToString(value: number): string;
 }
 
 declare type TCState = {
@@ -2682,6 +2836,26 @@ declare type EntityHitCondition = TEntityHitCondition & {
 
 declare type TEntityHitCondition = {
 	constructor();
+	/**
+	 * No condition.
+	 */
+	NONE: number;
+	/**
+	 * The hitbox will interact with characters.
+	 */
+	CHARACTER: number;
+	/**
+	 * The hitbox will interact with projectiles.
+	 */
+	PROJECTILE: number;
+	/**
+	 * The hitbox will interact with items.
+	 */
+	ITEM: number;
+	/**
+	 * The hitbox will interact with custom game objects.
+	 */
+	CUSTOM_GAME_OBJECT: number;
 	/**
 	 * The hitbox will interact with assists.
 	 */
@@ -4631,36 +4805,6 @@ declare class AnimationEndType {
 	 * Animation will change depending on the values of AnimationStats.nextState and AnimationStats.nextAnimation
 	 */
 	static readonly AUTO: number;
-}
-
-/**
- * Wraps CState values so that equality can be checked directly
- */
-declare class CharacterActions {
-	protected constructor();
-	static LEDGE_ATTACK: number;
-	static CRASH_ATTACK: number;
-	static JAB: number;
-	static DASH_ATTACK: number;
-	static TILT_FORWARD: number;
-	static TILT_UP: number;
-	static TILT_DOWN: number;
-	static STRONG_FORWARD: number;
-	static STRONG_UP: number;
-	static STRONG_DOWN: number;
-	static AERIAL_NEUTRAL: number;
-	static AERIAL_BACK: number;
-	static AERIAL_FORWARD: number;
-	static AERIAL_UP: number;
-	static AERIAL_DOWN: number;
-	static SPECIAL_NEUTRAL: number;
-	static SPECIAL_SIDE: number;
-	static SPECIAL_UP: number;
-	static SPECIAL_DOWN: number;
-	static THROW_UP: number;
-	static THROW_DOWN: number;
-	static THROW_FORWARD: number;
-	static THROW_BACK: number;
 }
 
 declare class JabResetType {
