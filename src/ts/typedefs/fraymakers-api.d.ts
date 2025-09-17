@@ -256,6 +256,7 @@ declare type CharacterStatsProps = {
 	runSpeedAcceleration: number;
 	runSpeedCap: number;
 	runSpeedInitial: number;
+	shieldAirType: number;
 	shieldAnimation: string;
 	shieldBackHeight: number;
 	shieldBackNineSliceContent: string;
@@ -284,6 +285,7 @@ declare type CharacterStatsProps = {
 	walkSpeedAcceleration: number;
 	walkSpeedCap: number;
 	walkSpeedInitial: number;
+	wallClingLimit: number;
 	wallJumpLimit: number;
 	wallJumpXSpeed: number;
 	wallJumpYSpeed: number;
@@ -814,6 +816,21 @@ declare class Entity extends ApiObject {
 	getCurrentFloor(): Structure;
 	attachToFloor(structure: Structure): boolean;
 	unattachFromFloor(): void;
+	/**
+	 * Forces the current entity to unattach from a wall.
+	 */
+	unattachFromWall(): void;
+	/**
+	 * Returns the wall the entity is attached to.
+	 * @return StructureApi
+	 */
+	getCurrentWall(): Structure;
+	/**
+	 * Forces the entity to attach to a particular wall.
+	 * @param structure The structure to attach to. Must be a wall.
+	 * @return Bool True if wall was attached to, false otherwise.
+	 */
+	attachToWall(structure: Structure): boolean;
 	getXSpeed(): number;
 	setXSpeed(speed: number): number;
 	getYSpeed(): number;
@@ -1114,6 +1131,16 @@ declare interface Character extends GameObject, TCharacter {
 	 * @return Int
 	 */
 	setTotalWallJumps(count: number): number;
+	/**
+	 * Returns the total number of wall clings the character has performed this airtime
+	 * @return Int
+	 */
+	getTotalWallClings(): number;
+	/**
+	 * Sets the total number of wall clings the character has performed this airtime
+	 * @return Int
+	 */
+	setTotalWallClings(count: number): number;
 	/**
 	 * This function does the necessary functions pre-landing like resetting your jumps, disabling your fastfall, etc.
 	 * Note that running this function by itself will not actually put you in a landing animation necessarily.
@@ -2234,6 +2261,7 @@ declare type TCState = {
 	HELD: number;
 	KO: number;
 	EMOTE: number;
+	WALL_CLING: number;
 	WALL_JUMP_IN: number;
 	WALL_JUMP: number;
 	BURIED: number;
@@ -2243,6 +2271,7 @@ declare type TCState = {
 	AIRDASH_FULL_SPEED: number;
 	AIRDASH_DECELERATING: number;
 	AIRDASH_ENDING: number;
+	AIRDASH_DIRECTIONAL: number;
 	ASSIST_CALL: number;
 	/**
 	 * Translates constant to a user-readable string.
@@ -2866,6 +2895,27 @@ declare type TEntityHitCondition = {
 	DEFAULT: number;
 }
 
+declare var ShieldAirType:ShieldAirType;
+declare type ShieldAirType = TShieldAirType & {
+	constructor();
+	NONE: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
+}
+
+declare type TShieldAirType = {
+	constructor();
+	NONE: number;
+	FRAYMAKERS: number;
+	DIRECTIONAL: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
+}
+
 declare interface CharacterAnimationStats extends AnimationStats, TCharacterAnimationStats {
 	new(settings: CharacterAnimationStatsProps);
 	/**
@@ -3123,9 +3173,14 @@ declare interface CharacterStats extends GameObjectStats, TCharacterStats {
 	 */
 	buryOffsetY: number;
 	/**
+	 * The behaviour of performing SHIELD while midair
+	 */
+	shieldAirType: number;
+	/**
 	 * The number of wall jumps the character can perform. Use a negative number for infinite wall jumps.
 	 */
 	wallJumpLimit: number;
+	wallClingLimit: number;
 	/**
 	 * The horizontal speed of a wall jump, positive values send the character away from the wall.
 	 */
@@ -3520,6 +3575,12 @@ declare type StatusEffectType = TStatusEffectType & {
 	AERIAL_SPEED_ACCELERATION_MULTIPLIER: number;
 	AERIAL_SPEED_CAP_MULTIPLIER: number;
 	DAMAGE_LOCKED: number;
+	TIME_FREEZE: number;
+	COLLISION_BOX_IMMUNITY: number;
+	COLLISION_BOX_DISABLED: number;
+	PHYSICS_FREEZE: number;
+	ANIMATION_FREEZE: number;
+	INPUT_FREEZE: number;
 	JUMP_SPEED_FORWARD_INITIAL_X_SPEED_MULTIPLIER: number;
 	JUMP_SPEED_BACKWARD_INITIAL_X_SPEED_MULTIPLIER: number;
 	CRAWL_SPEED_MULTIPLIER: number;
@@ -3569,6 +3630,12 @@ declare type TStatusEffectType = {
 	AERIAL_SPEED_ACCELERATION_MULTIPLIER: number;
 	AERIAL_SPEED_CAP_MULTIPLIER: number;
 	DAMAGE_LOCKED: number;
+	TIME_FREEZE: number;
+	COLLISION_BOX_IMMUNITY: number;
+	COLLISION_BOX_DISABLED: number;
+	PHYSICS_FREEZE: number;
+	ANIMATION_FREEZE: number;
+	INPUT_FREEZE: number;
 	JUMP_SPEED_FORWARD_INITIAL_X_SPEED_MULTIPLIER: number;
 	JUMP_SPEED_BACKWARD_INITIAL_X_SPEED_MULTIPLIER: number;
 	CRAWL_SPEED_MULTIPLIER: number;
