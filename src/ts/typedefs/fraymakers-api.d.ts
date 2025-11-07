@@ -1111,6 +1111,16 @@ declare interface Character extends GameObject, TCharacter {
 	setLives(lives: number): void;
 	getPlayerConfig(): PlayerConfig;
 	getFoes(): Character[];
+	/**
+	 * Get the damage applied at the start of each life
+	 * @return Float
+	 */
+	getStartDamage(): number;
+	/**
+	 * Determine whether the character is in damage mode or is using stamina
+	 * @return Bool true if damage mode, false if stamina
+	 */
+	inDamageMode(): boolean;
 	inHurtState(): boolean;
 	inStrongAttackChargeState(): boolean;
 	inAerialAttackState(): boolean;
@@ -1213,6 +1223,10 @@ declare interface Character extends GameObject, TCharacter {
 	 * @param state The state to check. If not specified, checks the current state
 	 */
 	isDisabledBySingleUse(state: number): boolean;
+	/**
+	 * Disable the respawn timer. Will be automatically be re-enabled if the character enters KO state afterwards.
+	 */
+	disableRespawnTimer(): void;
 	playAttackVoice(): void;
 	playHurtLightVoice(): void;
 	playHurtMediumVoice(): void;
@@ -2067,8 +2081,6 @@ declare class MatchSettingsConfig extends JSONClass {
 	playerIDs: boolean;
 	/**
 	 * Starting damage for players.
-	 * - Set to negative to give players stamina instead of racking up damage.
-	 * @see stamina
 	 */
 	startDamage: number;
 	/**
@@ -2457,6 +2469,7 @@ declare class GlobalVfx {
 	static CLANK: string;
 	static GROUNDED_SPIKE: string;
 	static GROUNDED_SPIKE_BACK: string;
+	static STAMINA_EXPLODE: string;
 	static MEDIUM_NORMAL_HIT: string;
 	static DUST_START_LIGHT: string;
 	static DUST_THROUGH: string;
@@ -3719,7 +3732,7 @@ declare interface PlayerConfig extends JSONClass, TPlayerConfig {
 	 */
 	startDamage: number;
 	/**
-	 * Damage mode for the player.
+	 * Damage mode for the player. This overrides the damageMode value provided by the level data settings for the match unless set to null
 	 * - true for damage
 	 * - false for stamina
 	 */
@@ -4427,6 +4440,10 @@ declare class Stage extends ApiObject {
 	 * Not currently implemented, will have no effect.
 	 */
 	updateLightboxStats(id: number, lightboxStats: {color?: number, intensity?: number, radius?: number, type?: number}): void;
+	/**
+	 * Updates the stage's stats that are allowed to be changed. Currently, only each blast zone's type can be changed.
+	 */
+	updateStageStats(stats: {ambientColor?: number, animationId?: string, bottomBlastZoneType?: number, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, leftBlastZoneType?: number, rightBlastZoneType?: number, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string, topBlastZoneType?: number}): void;
 	isDisposed(): boolean;
 }
 
@@ -5145,6 +5162,22 @@ declare class GrabAirType {
 	static readonly GRAB: number;
 }
 
+declare class BlastZoneType {
+	protected constructor();
+	/**
+	 * The blast zone will always KO a character
+	 */
+	static readonly ALWAYS_KO: number;
+	/**
+	 * The blast zone will only KO a character that is in a hurt state
+	 */
+	static readonly HURT_KO: number;
+	/**
+	 * The blast zone will never KO a character
+	 */
+	static readonly DISABLED: number;
+}
+
 /**
  * EntityEvent class represents events that occur within an Entity
  */
@@ -5517,7 +5550,7 @@ declare class StageShadowLayerStats extends JSONClass {
 }
 
 declare class StageStats extends JSONClass {
-	constructor(settings: {ambientColor?: number, animationId?: string, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string});
+	constructor(settings: {ambientColor?: number, animationId?: string, bottomBlastZoneType?: number, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, leftBlastZoneType?: number, rightBlastZoneType?: number, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string, topBlastZoneType?: number});
 	/**
 	 * The content id path of the sprite to load for this stage
 	 */
@@ -5538,6 +5571,22 @@ declare class StageStats extends JSONClass {
 	 * Specifies the color that should be added to non-stage elements
 	 */
 	ambientColor: number;
+	/**
+	 * Sets the blast zone type of the top blastzone
+	 */
+	topBlastZoneType: number;
+	/**
+	 * Sets the blast zone type of the left blastzone
+	 */
+	leftBlastZoneType: number;
+	/**
+	 * Sets the blast zone type of the right blastzone
+	 */
+	rightBlastZoneType: number;
+	/**
+	 * Sets the blast zone type of the bottom blastzone
+	 */
+	bottomBlastZoneType: number;
 }
 
 /**
