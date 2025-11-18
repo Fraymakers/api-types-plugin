@@ -501,6 +501,17 @@ declare type ProjectileStatsProps = {
 	weight: number;
 }
 
+declare type BodySparkleEffectOptions = {
+	boxType: number;
+	color: number;
+	duration: number;
+	fadeIn: number;
+	fadeOut: number;
+	sparkleEffect: string;
+	sparkleInterval: number;
+	sparkleRandomRotation: boolean;
+}
+
 declare type HudIntroConfig = {
 	animation: string;
 	sprite: string;
@@ -1121,6 +1132,11 @@ declare interface Character extends GameObject, TCharacter {
 	 * @return Bool true if damage mode, false if stamina
 	 */
 	inDamageMode(): boolean;
+	/**
+	 * Toggle damage mode or stamina for the current character
+	 * @param damageMode
+	 */
+	setDamageMode(damageMode: boolean): void;
 	inHurtState(): boolean;
 	inStrongAttackChargeState(): boolean;
 	inAerialAttackState(): boolean;
@@ -1285,6 +1301,39 @@ declare interface TCharacter {
 	 * Not necessarily the score used to determine the winner.
 	 */
 	getDamageCounterScore(): number;
+	/**
+	 * Adds a divider to the assist bar at proposed charge percentage if one is not already there.
+	 * @param percentage 0 -> 1 value. 0 representing an empty bar and 1 a full bar.
+	 */
+	addAssistChargeDivider(percentage: number): void;
+	/**
+	 * Removes an assist bar divider from specified charge percentage if one is found.
+	 * @param percentage 0 -> 1 value. 0 representing an empty bar and 1 a full bar.
+	 */
+	removeAssistChargeDivider(percentage: number): void;
+	/**
+	 * Sets a sprite icon in the corner of the assist bar. When an icon is in place, assist portraits will not appear on the bar.
+	 * @param content Set to null for no icon.
+	 * @param animation
+	 */
+	setAssistCornerIcon(content: string, animation?: string): void;
+	/**
+	 * Adds sprite and animation to the icon reserve at the specified index.
+	 * @param content
+	 * @param animation
+	 * @param index If ignored, the sprite will be automatically added to the end of the reserve.
+	 */
+	addIconToDamageCounterReserve(content: string, animation?: string, index?: number): void;
+	/**
+	 * Returns array of the sprites currently in reserve.
+	 * @return Array<Sprite>
+	 */
+	getDamageCounterReserveIcons(): Sprite[];
+	/**
+	 * Removes the sprite at index from the icon reserve.
+	 * @param index If ignored, the sprite at the end of the reserve will be removed.
+	 */
+	removeIconFromDamageCounterReserve(index: number): void;
 	setAssistCutinAnimation(animation: string): void;
 	getAssistCharge(): number;
 	setAssistCharge(value: number): void;
@@ -1296,6 +1345,11 @@ declare interface TCharacter {
 	 * @param animationOverride Overrides the animation to use for the state transition.
 	 */
 	toStateFromInput(state: number, animationOverride?: string): void;
+	/**
+	 * Returns how many assist charge levels have been passed. Reaching full bar also counts as a level.
+	 * @return Int
+	 */
+	getAssistChargeLevel(): number;
 	getAirdashCount(): number;
 	setAirdashCount(count: number): number;
 	inAirdashCanceledAnimation(): boolean;
@@ -1316,6 +1370,21 @@ declare interface TCharacter {
 	 * @return Bool
 	 */
 	getVisible(): boolean;
+	/**
+	 * Display an effect over the character.
+	 *
+	 * BodySparkleEffect options:
+	 * - `color:Int = 0x000000` - Hex RGB color for sparkle.
+	 * - `sparkleEffect:String = null` - VFX to spawn; "animation" or "spriteContent#animation".
+	 * - `sparkleInterval:Int = 0` - Frames between individual sparkles (FrameTimer).
+	 * - `sparkleRandomRotation:Bool = false` - Give each sparkle a random rotation.
+	 * - `boxType:Int = CollisionBoxType.NONE` - Which collision box type to sample for positions.
+	 * - `duration:Int = 0` - Total lifetime in frames; effect completes when this finishes.
+	 * - `fadeIn:Int = 0` - Fade-in duration in frames.
+	 * - `fadeOut:Int = 0` - Fade-out duration in frames.
+	 * @return FrameTimer
+	 */
+	startBodySparkleEffect(options: BodySparkleEffectOptions): TFrameTimer;
 }
 
 declare interface Match extends IApiObject, TMatch {
