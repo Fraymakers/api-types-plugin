@@ -72,6 +72,7 @@ declare type AssistAnimationStatsProps = {
 	solid: boolean;
 	staleDecay: boolean;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -110,10 +111,12 @@ declare type AssistStatsProps = {
 	initialState: number;
 	maxGravity: number;
 	metadata: any;
+	outgoingCollisionBoxDetection: boolean;
 	solid: boolean;
 	spriteContent: string;
 	stateTransitionMapOverrides: any;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	weight: number;
 }
 
@@ -141,6 +144,11 @@ declare type CharacterAnimationStatsProps = {
 	friction: number;
 	grabLedgeBehind: boolean;
 	grabLimit: number;
+	grabbableAreaType: number;
+	grabbableHeight: number;
+	grabbableWidth: number;
+	grabbableXOffset: number;
+	grabbableYOffset: number;
 	gravityMultiplier: number;
 	groundSpeedAcceleration: number;
 	groundSpeedCap: number;
@@ -165,6 +173,7 @@ declare type CharacterAnimationStatsProps = {
 	solid: boolean;
 	staleDecay: boolean;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -226,6 +235,11 @@ declare type CharacterStatsProps = {
 	getupRollSpeedStartFrame: number;
 	ghost: boolean;
 	grabAirType: number;
+	grabbableAreaType: number;
+	grabbableHeight: number;
+	grabbableWidth: number;
+	grabbableXOffset: number;
+	grabbableYOffset: number;
 	gravity: number;
 	groundSpeedAcceleration: number;
 	groundSpeedCap: number;
@@ -253,6 +267,7 @@ declare type CharacterStatsProps = {
 	maxGravity: number;
 	menuInfo: any;
 	metadata: any;
+	outgoingCollisionBoxDetection: boolean;
 	runSpeedAcceleration: number;
 	runSpeedCap: number;
 	runSpeedInitial: number;
@@ -282,6 +297,7 @@ declare type CharacterStatsProps = {
 	techRollSpeedLength: number;
 	techRollSpeedStartFrame: number;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	walkSpeedAcceleration: number;
 	walkSpeedCap: number;
 	walkSpeedInitial: number;
@@ -305,6 +321,7 @@ declare type HitboxStatsProps = {
 	buryTimeScaling: number;
 	buryType: number;
 	cameraShakeType: number;
+	canParrySteal: boolean;
 	damage: number;
 	directionalInfluence: boolean;
 	disabled: boolean;
@@ -379,6 +396,7 @@ declare type ItemAnimationStatsProps = {
 	solid: boolean;
 	staleDecay: boolean;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -456,6 +474,7 @@ declare type ProjectileAnimationStatsProps = {
 	solid: boolean;
 	staleDecay: boolean;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -493,11 +512,13 @@ declare type ProjectileStatsProps = {
 	initialState: number;
 	maxGravity: number;
 	metadata: any;
+	outgoingCollisionBoxDetection: boolean;
 	resizable: boolean;
 	solid: boolean;
 	spriteContent: string;
 	stateTransitionMapOverrides: any;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	weight: number;
 }
 
@@ -562,11 +583,130 @@ declare type PlaySoundArgs = {
 	volume: number;
 }
 
+/**
+ * Additional context for collision validators
+ */
+declare type CollisionValidatorOptions = {
+	startPoint: TPoint;
+}
+
 declare type PlayerBorder = {
 	alpha: number;
 	color: number;
 	radius: number;
 	solid: boolean;
+}
+
+/**
+ * Contains legacy flags indicating which types of checks to ignore (truthy means to ignore).
+ * @deprecated Use GrabOptions instead.
+ */
+declare type LegacyGrabOptions = {
+	/**
+	 * @deprecated Use GrabOptions ignoreAttackId field instead.
+	 */
+	attackId: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreBodyStatus field instead.
+	 */
+	bodyStatus: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreGrabLimits field instead.
+	 */
+	grabLimits: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreState field instead.
+	 */
+	state: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreTeam field instead.
+	 */
+	team: boolean;
+}
+
+/**
+ * For compatibility with LegacyGrabOptions.
+ * @deprecated Use GrabOptions instead.
+ */
+declare type ForceGrabOptions = {
+	/**
+	 * @deprecated Use GrabOptions ignoreAttackId field instead.
+	 */
+	attackId: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreBodyStatus field instead.
+	 */
+	bodyStatus: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreGrabLimits field instead.
+	 */
+	grabLimits: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreState field instead.
+	 */
+	state: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreTeam field instead.
+	 */
+	team: boolean;
+}
+
+/**
+ * Contains flags that indicate which checks to ignore.
+ */
+declare type GrabOptions = {
+	/**
+	 * @deprecated Use GrabOptions ignoreAttackId field instead.
+	 */
+	attackId: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreBodyStatus field instead.
+	 */
+	bodyStatus: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreGrabLimits field instead.
+	 */
+	grabLimits: boolean;
+	/**
+	 * When true, validation will ignore recently hit attack id restrictions.
+	 */
+	ignoreAttackId: boolean;
+	/**
+	 * When true, validation will ignore non-grabbable body statuses.
+	 */
+	ignoreBodyStatus: boolean;
+	/**
+	 * When true, validation will ignore grab box disabled conditions.
+	 */
+	ignoreGrabDisable: boolean;
+	/**
+	 * When true, validation will ignore grab limits.
+	 */
+	ignoreGrabLimits: boolean;
+	/**
+	 * When true, validation will ignore hurt box disabled conditions.
+	 */
+	ignoreHurtDisable: boolean;
+	/**
+	 * When true, validation will ignore non-grabbable states.
+	 */
+	ignoreState: boolean;
+	/**
+	 * When true, validation will ignore structure obstructions.
+	 */
+	ignoreStructures: boolean;
+	/**
+	 * When true, validation will ignore team restrictions.
+	 */
+	ignoreTeam: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreState field instead.
+	 */
+	state: boolean;
+	/**
+	 * @deprecated Use GrabOptions ignoreTeam field instead.
+	 */
+	team: boolean;
 }
 
 declare type AnimationStatsProps = {
@@ -603,6 +743,7 @@ declare type AnimationStatsProps = {
 	solid: boolean;
 	staleDecay: boolean;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	xSpeedConservation: number;
 	ySpeedConservation: number;
 }
@@ -639,10 +780,12 @@ declare type GameObjectStatsProps = {
 	initialState: number;
 	maxGravity: number;
 	metadata: any;
+	outgoingCollisionBoxDetection: boolean;
 	solid: boolean;
 	spriteContent: string;
 	stateTransitionMapOverrides: any;
 	terminalVelocity: number;
+	terminalVelocityRising: number;
 	weight: number;
 }
 
@@ -898,7 +1041,7 @@ declare class Entity extends ApiObject {
 	sendBehind(gameObject: GameObject): void;
 	swapDepths(gameObject: GameObject): void;
 	hitTestEntity(otherEntity: Entity, selfCollisionBoxType: number, otherCollisionBoxType: number, options?: {bailEarly?: boolean, callback?: (arg0: any, arg1: CollisionResult) => boolean}): CollisionResult[];
-	hitTestStructuresWithLineSegment(point1: Point, point2: Point, intersectionOut: Point, options: {collisionCheckType?: number, collisionValidator?: (physics: any, structureCollider: any, structure: any, structureType: number, collisionCheckType: number) => boolean, directionality?: boolean, excludeList?: any[], includeAttached?: boolean, includeDisabled?: boolean, includeList?: any[], requireRicochet?: boolean, structureType?: number}): Structure[];
+	hitTestStructuresWithLineSegment(point1: Point, point2: Point, intersectionOut: Point, options: {collisionCheckType?: number, collisionValidator?: (physics: any, structureCollider: any, structure: any, structureType: number, collisionCheckType: number, collisionValidatorOptions?: CollisionValidatorOptions) => boolean, directionality?: boolean, excludeList?: any[], includeAttached?: boolean, includeDisabled?: boolean, includeList?: any[], requireRicochet?: boolean, structureType?: number}): Structure[];
 	getCollisionBoxes(boxType: number): CollisionBox[];
 	/**
 	 * Takes in a group of entities, extracts their collision data, and then tests that collision data against another entity as if the collision data belonged to this
@@ -929,6 +1072,8 @@ declare class GameObject extends Entity {
 	getRootOwner(): GameObject;
 	getOwner(): GameObject;
 	setOwner(owner: GameObject): void;
+	getOriginalOwner(): GameObject;
+	getOriginalOwnerState(): number;
 	hasBodyStatus(flags: number): boolean;
 	addStatusEffect(type: number, value?: number, options?: {fields?: {frameTimer?: TFrameTimer}, metadata?: any, params?: {collisionBoxType?: number, interval?: number}, tag?: string}): {id: string, options?: {fields?: {frameTimer?: TFrameTimer}, metadata?: any, params?: {collisionBoxType?: number, interval?: number}, tag?: string}, type: number, value: number};
 	applyGlobalBodyStatus(status: number, duration: number): BodyStatusTimer;
@@ -961,7 +1106,7 @@ declare class GameObject extends Entity {
 	 * @param options Instructions for the types of grab-safety checks to ignore
 	 * @return True if grab was successful
 	 */
-	attemptGrab(foe: GameObject, options?: {attackId?: boolean, bodyStatus?: boolean, grabLimits?: boolean, state?: boolean, team?: boolean}): boolean;
+	attemptGrab(foe: GameObject, options?: GrabOptions): boolean;
 	getAnimationStat(name: string): any;
 	updateAnimationStats(stats: AnimationStatsProps): void;
 	getAnimationStatsMetadata(): any;
@@ -2701,6 +2846,10 @@ declare class AnimationStats extends JSONClass {
 	 */
 	terminalVelocity: number;
 	/**
+	 * Rising terminal velocity override for this animation, which only takes effect during reversed gravity. Resorts to default terminalVelocityRising GameObject stat when set to null.
+	 */
+	terminalVelocityRising: number;
+	/**
 	 * Metadata passed into the attack
 	 */
 	metadata: any;
@@ -2833,6 +2982,10 @@ declare class GameObjectStats extends JSONClass {
 	 */
 	terminalVelocity: number;
 	/**
+	 * The rising terminal velocity of the owner Entity, which only takes effect during reversed gravity. This is the maximum limit to the speed at which an Entity can rise. Please note however that knockback is not taken into account.
+	 */
+	terminalVelocityRising: number;
+	/**
 	 * Multiplier that is applied to knockback which gets assigned to HitboxStats on attack hit.  This is similar to damageRatio but is instead applied to outgoing attacks from this object. This is especially useful for scaling up difficulty during single player matches.
 	 */
 	attackRatio: number;
@@ -2880,6 +3033,10 @@ declare class GameObjectStats extends JSONClass {
 	 * Whether or not to destroy the object when it touches a stage's death bounds
 	 */
 	deathBoundsDestroy: boolean;
+	/**
+	 * Whether or not to enable outgoing collision box hit detection against other game objects. Can be used to optimize performance on game objects that don't need to interact with other objects, while other objects should still be able to affect this object. This stat is immutable internally and will have no effect when modified after the object has been created.
+	 */
+	outgoingCollisionBoxDetection: boolean;
 	/**
 	 * Additional Metadata
 	 */
@@ -3032,6 +3189,27 @@ declare interface CharacterAnimationStats extends AnimationStats, TCharacterAnim
 	 * If set to true the entity will be able to grab ledges while rising.
 	 */
 	grabLedgeRising: boolean;
+	/**
+	 * Determines the type of collision box that can be grabbed.
+	 * @see: GrabbableAreaType
+	 */
+	grabbableAreaType: number;
+	/**
+	 * Override for the horizontal offset of the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableXOffset: number;
+	/**
+	 * Override for the vertical offset of the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableYOffset: number;
+	/**
+	 * Override for the width of the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableWidth: number;
+	/**
+	 * Override for the height of the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableHeight: number;
 	/**
 	 * When true, the player can influence the character's movement during this animation.
 	 */
@@ -3242,6 +3420,27 @@ declare interface CharacterStats extends GameObjectStats, TCharacterStats {
 	 * The behaviour of performing GRAB while midair
 	 */
 	grabAirType: number;
+	/**
+	 * The type of collision box that can be grabbed.
+	 * @see: GrabbableAreaType
+	 */
+	grabbableAreaType: number;
+	/**
+	 * Horizontal offset for the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableXOffset: number;
+	/**
+	 * Vertical offset for the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableYOffset: number;
+	/**
+	 * Width for the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableWidth: number;
+	/**
+	 * Height for the default grabbable area when grabbableAreaType is GRABBABLE. Relative to the origin. Can override by having any grabbable boxes baked into the animation.
+	 */
+	grabbableHeight: number;
 	/**
 	 * The animation the character will use when buried.
 	 */
@@ -3597,6 +3796,10 @@ declare interface THitboxStats {
 	 * Specifies the camera shake behavior for the hit.
 	 */
 	cameraShakeType: number;
+	/**
+	 * When true, characters parrying this hitbox will be able to gain assist charge.
+	 */
+	canParrySteal: boolean;
 }
 
 declare interface ProjectileAnimationStats extends AnimationStats, TProjectileAnimationStats {
@@ -3645,6 +3848,7 @@ declare type StatusEffectType = TStatusEffectType & {
 	SHORT_HOP_SPEED_MULTIPLIER: number;
 	DOUBLE_JUMP_SPEED_MULTIPLIER: number;
 	TERMINAL_VELOCITY_MULTIPLIER: number;
+	TERMINAL_VELOCITY_RISING_MULTIPLIER: number;
 	FAST_FALL_SPEED_MULTIPLIER: number;
 	WALK_SPEED_INITIAL_MULTIPLIER: number;
 	WALK_SPEED_CAP_MULTIPLIER: number;
@@ -3700,6 +3904,7 @@ declare type TStatusEffectType = {
 	SHORT_HOP_SPEED_MULTIPLIER: number;
 	DOUBLE_JUMP_SPEED_MULTIPLIER: number;
 	TERMINAL_VELOCITY_MULTIPLIER: number;
+	TERMINAL_VELOCITY_RISING_MULTIPLIER: number;
 	FAST_FALL_SPEED_MULTIPLIER: number;
 	WALK_SPEED_INITIAL_MULTIPLIER: number;
 	WALK_SPEED_CAP_MULTIPLIER: number;
@@ -4064,7 +4269,7 @@ declare class Container extends DisplayObject {
 declare class Structure extends Entity {
 	getType(): number;
 	getStructureStat(name: string): any;
-	updateStructureStats(stats: {accelFriction?: number, animationId?: string, conserveDownwardMomentum?: boolean, conserveHorizontalMomentum?: boolean, conserveUpwardMomentum?: boolean, decelFriction?: number, disableShadows?: boolean, disabled?: boolean, dropThrough?: boolean, foregroundAnimationId?: string, foregroundSpriteContent?: string, influenceX?: number, land?: boolean, leftLedge?: boolean, leftLedgeSize?: number, ricochet?: boolean, rightLedge?: boolean, rightLedgeSize?: number, spriteContent?: string, startX?: number, startY?: number, structureType?: number}): void;
+	updateStructureStats(stats: {accelFriction?: number, animationId?: string, conserveDownwardMomentum?: boolean, conserveHorizontalMomentum?: boolean, conserveUpwardMomentum?: boolean, decelFriction?: number, disableShadows?: boolean, disabled?: boolean, dropThrough?: boolean, foregroundAnimationId?: string, foregroundSpriteContent?: string, influenceX?: number, land?: boolean, leftLedge?: boolean, leftLedgeGrabLayerType?: number, leftLedgeSize?: number, ricochet?: boolean, rightLedge?: boolean, rightLedgeGrabLayerType?: number, rightLedgeSize?: number, spriteContent?: string, startX?: number, startY?: number, structureType?: number}): void;
 	addToWhitelist(gameObject: GameObject): void;
 	removeFromWhitelist(gameObject: GameObject): void;
 	isWhitelisted(gameObject: GameObject): boolean;
@@ -4329,6 +4534,8 @@ declare class Random {
 	static getUnseededInt(from: number, to: number): number;
 	static getUnseededFloat(from: number, to: number): number;
 	static getUnseededChoice(arr: any[]): any;
+	static shuffle(arr: any[]): void;
+	static shuffleUnseeded(arr: any[]): void;
 }
 
 declare class RectCollisionArea extends CollisionArea {
@@ -4510,7 +4717,7 @@ declare class Stage extends ApiObject {
 	 */
 	updateLightboxStats(id: number, lightboxStats: {color?: number, intensity?: number, radius?: number, type?: number}): void;
 	/**
-	 * Updates the stage's stats that are allowed to be changed. Currently, only each blast zone's type can be changed.
+	 * Updates the stage's stats that are allowed to be changed. Currently, only ambient color and each blast zone's type can be changed.
 	 */
 	updateStageStats(stats: {ambientColor?: number, animationId?: string, bottomBlastZoneType?: number, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, leftBlastZoneType?: number, rightBlastZoneType?: number, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string, topBlastZoneType?: number}): void;
 	isDisposed(): boolean;
@@ -4917,6 +5124,7 @@ declare class CollisionBoxType {
 	static PIVOT: number;
 	static ABSORB: number;
 	static AUTOLINK: number;
+	static GRABBABLE: number;
 	static CUSTOMA: number;
 	static CUSTOMB: number;
 	static CUSTOMC: number;
@@ -5048,6 +5256,12 @@ declare class VfxLayer {
 	static readonly FOREGROUND_FRONT: string;
 }
 
+declare class LedgeGrabLayerType {
+	protected constructor();
+	static readonly BEHIND: number;
+	static readonly FRONT: number;
+}
+
 declare class VfxStats extends JSONClass {
 	constructor(settings: {animation?: string, chain?: any, fadeOut?: boolean, flipWith?: boolean, forceVisible?: boolean, layer?: string, loop?: boolean, physics?: boolean, relativeWith?: boolean, resizeWith?: boolean, rotation?: number, scaleX?: number, scaleY?: number, shrink?: boolean, smoothing?: boolean, spriteContent?: string, timeout?: number, x?: number, y?: number});
 	/**
@@ -5129,7 +5343,7 @@ declare class VfxStats extends JSONClass {
 }
 
 declare class StructureStats extends JSONClass {
-	constructor(settings: {accelFriction?: number, animationId?: string, conserveDownwardMomentum?: boolean, conserveHorizontalMomentum?: boolean, conserveUpwardMomentum?: boolean, decelFriction?: number, disableShadows?: boolean, disabled?: boolean, dropThrough?: boolean, foregroundAnimationId?: string, foregroundSpriteContent?: string, influenceX?: number, land?: boolean, leftLedge?: boolean, leftLedgeSize?: number, ricochet?: boolean, rightLedge?: boolean, rightLedgeSize?: number, spriteContent?: string, startX?: number, startY?: number, structureType?: number});
+	constructor(settings: {accelFriction?: number, animationId?: string, conserveDownwardMomentum?: boolean, conserveHorizontalMomentum?: boolean, conserveUpwardMomentum?: boolean, decelFriction?: number, disableShadows?: boolean, disabled?: boolean, dropThrough?: boolean, foregroundAnimationId?: string, foregroundSpriteContent?: string, influenceX?: number, land?: boolean, leftLedge?: boolean, leftLedgeGrabLayerType?: number, leftLedgeSize?: number, ricochet?: boolean, rightLedge?: boolean, rightLedgeGrabLayerType?: number, rightLedgeSize?: number, spriteContent?: string, startX?: number, startY?: number, structureType?: number});
 	/**
 	 * Starting X position of the structure
 	 */
@@ -5187,6 +5401,14 @@ declare class StructureStats extends JSONClass {
 	 */
 	rightLedgeSize: number;
 	/**
+	 * Determines the layering strategy of character left ledge grabs on this structure (StructureType.FLOOR only).
+	 */
+	leftLedgeGrabLayerType: number;
+	/**
+	 * Determines the layering strategy of character right ledge grabs on this structure (StructureType.FLOOR only).
+	 */
+	rightLedgeGrabLayerType: number;
+	/**
 	 * When true, objects can land on the structure. When false, the structure will still prevent objects from passing through however their structureCollision component will never register an object as "landed". (StructureType.FLOOR only).
 	 */
 	land: boolean;
@@ -5229,6 +5451,29 @@ declare class GrabAirType {
 	 * The engine will jump to the grab_air animation, if it exists. If no animation is found, acts like NONE
 	 */
 	static readonly GRAB: number;
+}
+
+/**
+ * Governs which collision box type is used for grab collision
+ */
+declare class GrabbableAreaType {
+	protected constructor();
+	/**
+	 * The engine will use the value in character stats. If used in character stats, will fall back to HURT
+	 */
+	static readonly AUTO: number;
+	/**
+	 * The engine will use the grab->hurtbox collision to determine grabs
+	 */
+	static readonly HURT: number;
+	/**
+	 * The engine will use the grab->grabbablebox collision to determine grabs
+	 */
+	static readonly GRABBABLE: number;
+	/**
+	 * The engine will not allow grabs
+	 */
+	static readonly NONE: number;
 }
 
 declare class BlastZoneType {
