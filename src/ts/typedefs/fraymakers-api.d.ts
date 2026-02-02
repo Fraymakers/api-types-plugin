@@ -583,6 +583,16 @@ declare type PlaySoundArgs = {
 	volume: number;
 }
 
+declare type ShakeConfig = {
+	decaySamples: number[];
+	decayType: number;
+	durationSeconds: number;
+	frequencyHz: number;
+	waveAmplitude: number;
+	waveSamples: number[];
+	waveType: number;
+}
+
 /**
  * Additional context for collision validators
  */
@@ -595,6 +605,11 @@ declare type PlayerBorder = {
 	color: number;
 	radius: number;
 	solid: boolean;
+}
+
+declare type ForceLandOptions = {
+	effect: boolean;
+	playLandAnimation: boolean;
 }
 
 /**
@@ -1092,6 +1107,7 @@ declare class GameObject extends Entity {
 	setDamage(dmg: number): number;
 	validateHit(hitboxStats: HitboxStats): boolean;
 	takeHit(hitboxStats: HitboxStats, collisionResult?: CollisionResult): boolean;
+	registerHit(attackId: number): void;
 	/**
 	 * Initiates processing as though a hitbox=>hurtbox collision was detected. Due to validation checks during processing, a "hit" may not occur.
 	 * @param target GameObject receiving the hit
@@ -1315,9 +1331,17 @@ declare interface Character extends GameObject, TCharacter {
 	/**
 	 * This function does the necessary functions pre-landing like resetting your jumps, disabling your fastfall, etc.
 	 * Note that running this function by itself will not actually put you in a landing animation necessarily.
-	 * Also note that this function runs automatically when calling toLand()
+	 * Also note that this function runs automatically when calling forceLand()
 	 */
 	preLand(effect: boolean): void;
+	/**
+	 * This function does the necessary functions on landing like resetting your jumps, disabling your fastfall, etc.
+	 * This also dispatches GameObjectEvent.LAND events.
+	 * Also note that this function automatically calls preLand()
+	 * @param effect Whether to play the default vfx on land.
+	 * @param playLandAnimation Whether to play the land animation, respects animation stats.
+	 */
+	forceLand(options: ForceLandOptions): void;
 	/**
 	 * Returns the pressed controls for the character. This data may be modified by the input buffer or other input post-processing.
 	 * @return Cached ControlsObject instance containing the pressed controls data.
@@ -4644,6 +4668,35 @@ declare class Score extends ApiObject {
 	 * Keeps track of list of ports that were ko'd and count toward multi-kill status
 	 */
 	multiKills: number[];
+}
+
+declare class Shake extends ASerializable {
+	/**
+	 * Starts the shake using values from the passed config
+	 *
+	 * @see ShakeConfig
+	 */
+	start(config: ShakeConfig): void;
+	/**
+	 * Stops the shake.
+	 */
+	cancel(): void;
+	/**
+	 * Updates the Shake instance. Call this every frame.
+	 */
+	update(): void;
+	/**
+	 * Returns the current value of the shake, based on the time passed since started.
+	 */
+	amplitude(): number;
+	/**
+	 * Returns true if the shake is in progress
+	 */
+	isShaking(): boolean;
+	/**
+	 * Creates a Shake instance
+	 */
+	static create(): Shake;
 }
 
 declare class SolidColorShader extends Shader {
