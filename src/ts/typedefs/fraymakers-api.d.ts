@@ -42,6 +42,8 @@ declare type AssistAnimationStatsProps = {
 	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	autoRotate: boolean;
 	bodyStatus: number;
 	bodyStatusStrength: number;
@@ -86,6 +88,8 @@ declare type AssistStatsProps = {
 	aerialHipYOffset: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	assistBgBeforeTrail: boolean;
 	assistChargeValue: number;
 	attackRatio: number;
@@ -125,10 +129,12 @@ declare type CharacterAnimationStatsProps = {
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
 	allowFastFall: boolean;
+	allowFloorAttach: boolean;
 	allowJump: boolean;
 	allowMovement: boolean;
 	allowTurn: boolean;
 	allowTurnOnFirstFrame: boolean;
+	allowWallAttach: boolean;
 	autoRotate: boolean;
 	autocancel: boolean;
 	bodyStatus: number;
@@ -202,6 +208,8 @@ declare type CharacterStatsProps = {
 	airdashSpeedCap: number;
 	airdashStartupLength: number;
 	airdashTrailEffect: string;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	attackRatio: number;
 	attackVoiceIds: string[];
 	attackVoiceSilenceRate: number;
@@ -229,6 +237,10 @@ declare type CharacterStatsProps = {
 	floorHipWidth: number;
 	floorHipXOffset: number;
 	floorHipYOffset: number;
+	freezeEffectOffsetX: number;
+	freezeEffectOffsetY: number;
+	freezeEffectScaleX: number;
+	freezeEffectScaleY: number;
 	friction: number;
 	getupRollSpeed: number;
 	getupRollSpeedLength: number;
@@ -355,6 +367,7 @@ declare type HitboxStatsProps = {
 	selfHitstop: number;
 	selfHitstopOffset: number;
 	shieldDamageMultiplier: number;
+	shieldHitstop: number;
 	shieldable: boolean;
 	shieldstunMultiplier: number;
 	stackKnockback: boolean;
@@ -366,6 +379,8 @@ declare type ItemAnimationStatsProps = {
 	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	autoRotate: boolean;
 	bodyStatus: number;
 	bodyStatusStrength: number;
@@ -444,6 +459,8 @@ declare type ProjectileAnimationStatsProps = {
 	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	autoRotate: boolean;
 	bodyStatus: number;
 	bodyStatusStrength: number;
@@ -488,6 +505,8 @@ declare type ProjectileStatsProps = {
 	aerialHipYOffset: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	attackRatio: number;
 	baseScaleX: number;
 	baseScaleY: number;
@@ -724,10 +743,62 @@ declare type GrabOptions = {
 	team: boolean;
 }
 
+/**
+ * Contains flags for positional prediction.
+ */
+declare type ProjectDistanceOpts = {
+	/**
+	 * Override for aerial friction
+	 */
+	aerialFriction: number;
+	/**
+	 * Override for ground friction
+	 */
+	friction: number;
+	/**
+	 * Multiplier for gravity
+	 */
+	gravityMultiplier: number;
+	/**
+	 * When true, aerial friction will be ignored
+	 */
+	ignoreAirFriction: boolean;
+	/**
+	 * When true, gravity will be ignored
+	 */
+	ignoreGravity: boolean;
+	/**
+	 * When true, ground friction will be ignored
+	 */
+	ignoreGroundFriction: boolean;
+	/**
+	 * When true, and in knockback, any distance gained after knockback is over will be ignored
+	 */
+	ignorePostKnockback: boolean;
+	/**
+	 * Override for terminal velocity
+	 */
+	terminalVelocity: number;
+	/**
+	 * Override for rising terminal velocity
+	 */
+	terminalVelocityRising: number;
+	/**
+	 * Multiplier for initial x velocity
+	 */
+	xVelocityMultiplier: number;
+	/**
+	 * Multiplier for initial y velocity
+	 */
+	yVelocityMultiplier: number;
+}
+
 declare type AnimationStatsProps = {
 	aerialFriction: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	autoRotate: boolean;
 	bodyStatus: number;
 	bodyStatusStrength: number;
@@ -772,6 +843,8 @@ declare type GameObjectStatsProps = {
 	aerialHipYOffset: number;
 	aerialSpeedAcceleration: number;
 	aerialSpeedCap: number;
+	allowFloorAttach: boolean;
+	allowWallAttach: boolean;
 	attackRatio: number;
 	baseScaleX: number;
 	baseScaleY: number;
@@ -981,6 +1054,7 @@ declare class Entity extends ApiObject {
 	getEcbRightHipX(): number;
 	getEcbRightHipY(): number;
 	getEcbCollisionBox(): CollisionBox;
+	getEcbCollisionBoxScaled(): CollisionBox;
 	refreshEcb(): void;
 	getCurrentFloor(): Structure;
 	attachToFloor(structure: Structure): boolean;
@@ -1102,6 +1176,34 @@ declare class GameObject extends Entity {
 	setXVelocityScaled(velocity: number): number;
 	setYVelocityScaled(velocity: number): number;
 	moveScaled(x: number, y: number): void;
+	/**
+	 * Returns the predictive X position of the GameObject, accounting for both normal velocity and knockback velocity.
+	 * @param frames Frames to project
+	 * @param opts projection options @see ProjectDistanceOpts
+	 * @return Float The X Position after the specified amount of frames have passed
+	 */
+	projectedXPosition(frames: number, opts?: ProjectDistanceOpts): number;
+	/**
+	 * Returns the predictive Y position of the GameObject, accounting for both normal velocity and knockback velocity.
+	 * @param frames Frames to project
+	 * @param opts projection options @see ProjectDistanceOpts
+	 * @return Float The Y Position after the specified amount of frames have passed
+	 */
+	projectedYPosition(frames: number, opts?: ProjectDistanceOpts): number;
+	/**
+	 * Returns the predictive X offset of the GameObject, accounting for both normal velocity and knockback velocity.
+	 * @param frames Frames to project
+	 * @param opts projection options @see ProjectDistanceOpts
+	 * @return Float The expected change in X position after the specified amount of frames have passed
+	 */
+	projectedXOffset(frames: number, opts?: ProjectDistanceOpts): number;
+	/**
+	 * Returns the predictive Y offset of the GameObject, accounting for both normal velocity and knockback velocity.
+	 * @param frames Frames to project
+	 * @param opts projection options @see ProjectDistanceOpts
+	 * @return Float The expected change in Y position after the specified amount of frames have passed
+	 */
+	projectedYOffset(frames: number, opts?: ProjectDistanceOpts): number;
 	getDamage(): number;
 	addDamage(dmg: number): number;
 	setDamage(dmg: number): number;
@@ -1127,7 +1229,22 @@ declare class GameObject extends Entity {
 	updateAnimationStats(stats: AnimationStatsProps): void;
 	getAnimationStatsMetadata(): any;
 	updateAnimationStatsMetadata(stats: any): void;
-	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, entityHitConditions?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitSoundOverrideArray?: string[], hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, physicsHitConditions?: number, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
+	updateHitboxStats(id: number, stats: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, entityHitConditions?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitSoundOverrideArray?: string[], hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, physicsHitConditions?: number, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldHitstop?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number}): void;
+	/**
+	 * Get the hitbox stats of the current animation
+	 *
+	 * If an animation is provided, will get the default hitbox stats of that animation instead
+	 * @param id hitbox index to query for
+	 * @param animationOverride optional animation to check for
+	 * @return HitboxStats
+	 */
+	getHitboxStats(id: number, animationOverride?: string): HitboxStats;
+	/**
+	 * Align hitbox stats with the current animation.
+	 * For example will ensure matching attackId and apply any charge multipliers
+	 * @param stats hitbox stats to apply the sync
+	 */
+	syncHitboxStats(stats: HitboxStats): void;
 	/**
 	 * Returns the first grabbed foe in the grabbed foes array.
 	 * @return The gameObjectApi object representing the grabbed foe.
@@ -1252,13 +1369,14 @@ declare class DisplaySettings {
 
 declare class CharacterAiScript extends ApiObject {
 	isRecovering(): boolean;
+	isNoGroundBeneath(xOffset: number, threshold?: number): boolean;
 	getImmediateTarget(): Entity;
 	getTargetFoe(): Entity;
 	addInputOverrides(inputList: number[]): void;
 	hasInputOverrides(): boolean;
 	clearInputOverrides(): void;
 	/**
-	 * Returns true if an action is enabled for the built-in AI
+	 * Disables an action for use by the built-in AI
 	 * @param action
 	 * @see CharacterAiActions
 	 */
@@ -1269,6 +1387,13 @@ declare class CharacterAiScript extends ApiObject {
 	 * @see CharacterAiActions
 	 */
 	enableAction(action: number): void;
+	/**
+	 * Toggles an action's use by the built-in AI
+	 * @param action the action to enable
+	 * @param value if true the action will be enabled, otherwise will be disabled
+	 * @see CharacterAiActions
+	 */
+	toggleAction(action: number, value: boolean): void;
 	/**
 	 * Returns true of the given action is enabled
 	 * @see CharacterAiActions
@@ -1299,6 +1424,11 @@ declare interface Character extends GameObject, TCharacter {
 	 */
 	setDamageMode(damageMode: boolean): void;
 	inHurtState(): boolean;
+	/**
+	 * Returns true if the character is in a hurt state where normal hitstun/knockback rules may not apply (i.e. bury/freeze)
+	 * @return Bool True if in a special hurt state.
+	 */
+	inSpecialHurtState(): boolean;
 	inStrongAttackChargeState(): boolean;
 	inAerialAttackState(): boolean;
 	inSpecialAttackState(): boolean;
@@ -1572,6 +1702,7 @@ declare interface Match extends IApiObject, TMatch {
 	getCollisionAreas(): CollisionArea[];
 	getStructures(): Structure[];
 	getCollisionAreaByName(name: string): CollisionArea;
+	getCollisionAreasByName(name: string): CollisionArea[];
 	getStructureByName(name: string): Structure;
 	getCamera(): Camera;
 	createSpriteStructure(sprite: Sprite): Structure;
@@ -1950,54 +2081,6 @@ declare class AiHitstopNudgeOption {
 	static readonly DOWN_RIGHT: number;
 }
 
-declare class StructureType {
-	protected constructor();
-	static isWall(structureType: number): boolean;
-	static readonly NONE: number;
-	static readonly LEFT_WALL: number;
-	static readonly RIGHT_WALL: number;
-	static readonly CEILING: number;
-	static readonly FLOOR: number;
-	static readonly AUTO: number;
-	/**
-	 * Translates constant to a user-readable string.
-	 */
-	static constToString(value: number): string;
-}
-
-declare class TPoint {
-	constructor(x: number, y?: number);
-	distance(point: TPoint): number;
-	/**
-	 * Fast relative distance calculator
-	 */
-	distanceSquared(point: TPoint): number;
-	init(x: number, y?: number): TPoint;
-	copyFrom(point: TPoint): void;
-	/**
-	 * Adds other into this point, returns this
-	 * @param other The other point to add
-	 * @return New point after combining the points together
-	 */
-	add(other: TPoint): TPoint;
-	clone(): TPoint;
-	scale(x: number, y: number): void;
-	offset(x: number, y: number): void;
-	equals(point: TPoint): boolean;
-	static polar(len: number, angle: number, outPoint?: TPoint): TPoint;
-	static interpolate(point1: TPoint, point2: TPoint, fraction: number): TPoint;
-	/**
-	 * Gets the interesection between two line segments (or null if no intersection can be found)
-	 * @param a0 First point of line segment A
-	 * @param a1 Second point of line segment A
-	 * @param b0 First point of line segment B
-	 * @param b1  Second point of line segment B
-	 * @param out An existing point object to be used as a return value instead of allocating a new Point.
-	 * @return Point The point at which the two line segments intersect (or null if there is no intersection)
-	 */
-	static lineSegmentsIntersect(a0: TPoint, a1: TPoint, b0: TPoint, b1: TPoint, out?: TPoint): TPoint;
-}
-
 declare var CharacterAiActions:CharacterAiActions;
 declare type CharacterAiActions = TCharacterAiActions & {
 	constructor();
@@ -2032,6 +2115,8 @@ declare type CharacterAiActions = TCharacterAiActions & {
 	FULL_HOP: number;
 	SPECIAL_LEFT: number;
 	SPECIAL_RIGHT: number;
+	SPECIAL_LEFT_AIR: number;
+	SPECIAL_RIGHT_AIR: number;
 	DASH_ATTACK_LEFT: number;
 	DASH_ATTACK_RIGHT: number;
 	THROW_LEFT: number;
@@ -2040,69 +2125,6 @@ declare type CharacterAiActions = TCharacterAiActions & {
 	TILT_RIGHT: number;
 	STRONG_LEFT: number;
 	STRONG_RIGHT: number;
-	/**
-	 * Translates constant to a user-readable string.
-	 */
-	constToString(value: number): string;
-}
-
-declare type TCharacterAiActions = {
-	constructor();
-	JAB: number;
-	DASH_ATTACK: number;
-	TILT_FORWARD: number;
-	TILT_UP: number;
-	TILT_DOWN: number;
-	STRONG_FORWARD: number;
-	STRONG_UP: number;
-	STRONG_DOWN: number;
-	AERIAL_NEUTRAL: number;
-	AERIAL_BACK: number;
-	AERIAL_FORWARD: number;
-	AERIAL_UP: number;
-	AERIAL_DOWN: number;
-	SPECIAL_NEUTRAL: number;
-	SPECIAL_SIDE: number;
-	SPECIAL_UP: number;
-	SPECIAL_DOWN: number;
-	SPECIAL_NEUTRAL_AIR: number;
-	SPECIAL_SIDE_AIR: number;
-	SPECIAL_UP_AIR: number;
-	SPECIAL_DOWN_AIR: number;
-	GRAB: number;
-	THROW_UP: number;
-	THROW_DOWN: number;
-	THROW_FORWARD: number;
-	THROW_BACK: number;
-	DOUBLE_JUMP: number;
-	SHORT_HOP: number;
-	FULL_HOP: number;
-	SPECIAL_LEFT: number;
-	SPECIAL_RIGHT: number;
-	DASH_ATTACK_LEFT: number;
-	DASH_ATTACK_RIGHT: number;
-	THROW_LEFT: number;
-	THROW_RIGHT: number;
-	TILT_LEFT: number;
-	TILT_RIGHT: number;
-	STRONG_LEFT: number;
-	STRONG_RIGHT: number;
-	AIRDASH: number;
-	AIRDASH_FORWARD: number;
-	AIRDASH_FORWARD_UP: number;
-	AIRDASH_FORWARD_DOWN: number;
-	AIRDASH_BACK: number;
-	AIRDASH_BACK_UP: number;
-	AIRDASH_BACK_DOWN: number;
-	AIRDASH_DOWN: number;
-	AIRDASH_UP: number;
-	ASSIST: number;
-	AIRDASH_RIGHT: number;
-	AIRDASH_RIGHT_UP: number;
-	AIRDASH_RIGHT_DOWN: number;
-	AIRDASH_LEFT: number;
-	AIRDASH_LEFT_UP: number;
-	AIRDASH_LEFT_DOWN: number;
 	/**
 	 * Translates constant to a user-readable string.
 	 */
@@ -2212,7 +2234,121 @@ declare type CState = TCState & {
 	WALL_CLING: number;
 	WALL_JUMP_IN: number;
 	WALL_JUMP: number;
+	FROZEN: number;
 	BURIED: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: number): string;
+}
+
+declare class StructureType {
+	protected constructor();
+	static isWall(structureType: number): boolean;
+	static readonly NONE: number;
+	static readonly LEFT_WALL: number;
+	static readonly RIGHT_WALL: number;
+	static readonly CEILING: number;
+	static readonly FLOOR: number;
+	static readonly AUTO: number;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	static constToString(value: number): string;
+}
+
+declare class TPoint {
+	constructor(x: number, y?: number);
+	distance(point: TPoint): number;
+	/**
+	 * Fast relative distance calculator
+	 */
+	distanceSquared(point: TPoint): number;
+	init(x: number, y?: number): TPoint;
+	copyFrom(point: TPoint): void;
+	/**
+	 * Adds other into this point, returns this
+	 * @param other The other point to add
+	 * @return New point after combining the points together
+	 */
+	add(other: TPoint): TPoint;
+	clone(): TPoint;
+	scale(x: number, y: number): void;
+	offset(x: number, y: number): void;
+	equals(point: TPoint): boolean;
+	static polar(len: number, angle: number, outPoint?: TPoint): TPoint;
+	static interpolate(point1: TPoint, point2: TPoint, fraction: number): TPoint;
+	/**
+	 * Gets the interesection between two line segments (or null if no intersection can be found)
+	 * @param a0 First point of line segment A
+	 * @param a1 Second point of line segment A
+	 * @param b0 First point of line segment B
+	 * @param b1  Second point of line segment B
+	 * @param out An existing point object to be used as a return value instead of allocating a new Point.
+	 * @return Point The point at which the two line segments intersect (or null if there is no intersection)
+	 */
+	static lineSegmentsIntersect(a0: TPoint, a1: TPoint, b0: TPoint, b1: TPoint, out?: TPoint): TPoint;
+}
+
+declare type TCharacterAiActions = {
+	constructor();
+	JAB: number;
+	DASH_ATTACK: number;
+	TILT_FORWARD: number;
+	TILT_UP: number;
+	TILT_DOWN: number;
+	STRONG_FORWARD: number;
+	STRONG_UP: number;
+	STRONG_DOWN: number;
+	AERIAL_NEUTRAL: number;
+	AERIAL_BACK: number;
+	AERIAL_FORWARD: number;
+	AERIAL_UP: number;
+	AERIAL_DOWN: number;
+	SPECIAL_NEUTRAL: number;
+	SPECIAL_SIDE: number;
+	SPECIAL_UP: number;
+	SPECIAL_DOWN: number;
+	SPECIAL_NEUTRAL_AIR: number;
+	SPECIAL_SIDE_AIR: number;
+	SPECIAL_UP_AIR: number;
+	SPECIAL_DOWN_AIR: number;
+	GRAB: number;
+	THROW_UP: number;
+	THROW_DOWN: number;
+	THROW_FORWARD: number;
+	THROW_BACK: number;
+	DOUBLE_JUMP: number;
+	SHORT_HOP: number;
+	FULL_HOP: number;
+	SPECIAL_LEFT: number;
+	SPECIAL_RIGHT: number;
+	SPECIAL_LEFT_AIR: number;
+	SPECIAL_RIGHT_AIR: number;
+	DASH_ATTACK_LEFT: number;
+	DASH_ATTACK_RIGHT: number;
+	THROW_LEFT: number;
+	THROW_RIGHT: number;
+	TILT_LEFT: number;
+	TILT_RIGHT: number;
+	STRONG_LEFT: number;
+	STRONG_RIGHT: number;
+	AIRDASH: number;
+	AIRDASH_FORWARD: number;
+	AIRDASH_FORWARD_UP: number;
+	AIRDASH_FORWARD_DOWN: number;
+	AIRDASH_BACK: number;
+	AIRDASH_BACK_UP: number;
+	AIRDASH_BACK_DOWN: number;
+	AIRDASH_DOWN: number;
+	AIRDASH_UP: number;
+	ASSIST: number;
+	AIRDASH_RIGHT: number;
+	AIRDASH_RIGHT_UP: number;
+	AIRDASH_RIGHT_DOWN: number;
+	AIRDASH_LEFT: number;
+	AIRDASH_LEFT_UP: number;
+	AIRDASH_LEFT_DOWN: number;
 	/**
 	 * Translates constant to a user-readable string.
 	 */
@@ -2514,6 +2650,7 @@ declare type TCState = {
 	WALL_CLING: number;
 	WALL_JUMP_IN: number;
 	WALL_JUMP: number;
+	FROZEN: number;
 	BURIED: number;
 	AIRDASH_DELAY: number;
 	AIRDASH_INITIAL: number;
@@ -2808,55 +2945,122 @@ declare type TGlobalSfx = {
 	constToString(value: string): string;
 }
 
-declare class GlobalVfx {
-	protected constructor();
-	static AIRDASH: string;
-	static AIRDASH_BACK: string;
-	static REVIVAL: string;
-	static DUST_START_HEAVY: string;
-	static JUMP_TRAIL: string;
-	static DOUBLE_JUMP_DUST: string;
-	static DOUBLE_JUMP_DUST_BACK: string;
-	static KNOCKBACK_SMOKE: string;
-	static CRASH_BOUNCE: string;
-	static CRASH_BOUNCE_BACK: string;
-	static CRASH_NORMAL: string;
-	static GROUND_BOUNCE: string;
-	static GROUND_BOUNCE_BACK: string;
-	static LAND_DUST: string;
-	static LAND_DUST_BACK: string;
-	static SPARKLE_FASTFALL: string;
-	static KO_BLAST: string;
-	static CLANK: string;
-	static GROUNDED_SPIKE: string;
-	static GROUNDED_SPIKE_BACK: string;
-	static STAMINA_EXPLODE: string;
-	static MEDIUM_NORMAL_HIT: string;
-	static DUST_START_LIGHT: string;
-	static DUST_THROUGH: string;
-	static DUST_SPIN: string;
-	static DUST_POOF: string;
-	static DUST_POOF_BACK: string;
-	static DUST_SPIN_BACK: string;
-	static SPARKLE_LIGHT: string;
-	static SPARKLE_HEAVY: string;
-	static SPIKE: string;
-	static SPIKE_BACK: string;
-	static LIGHT_NORMAL_HIT: string;
-	static LIGHT_NORMAL_HIT_BACK: string;
-	static MEDIUM_NORMAL_HIT_BACK: string;
-	static HEAVY_NORMAL_HIT: string;
-	static HEAVY_NORMAL_HIT_BACK: string;
-	static FATAL_NORMAL_HIT: string;
-	static FATAL_NORMAL_HIT_BACK: string;
-	static LIGHT_NORMAL_ANGLED_HIT: string;
-	static LIGHT_NORMAL_ANGLED_HIT_BACK: string;
-	static MEDIUM_NORMAL_ANGLED_HIT: string;
-	static MEDIUM_NORMAL_ANGLED_HIT_BACK: string;
-	static HEAVY_NORMAL_ANGLED_HIT: string;
-	static HEAVY_NORMAL_ANGLED_HIT_BACK: string;
-	static FATAL_NORMAL_ANGLED_HIT: string;
-	static FATAL_NORMAL_ANGLED_HIT_BACK: string;
+declare var GlobalVfx:GlobalVfx;
+declare type GlobalVfx = TGlobalVfx & {
+	constructor();
+	REVIVAL: string;
+	DUST_START_HEAVY: string;
+	JUMP_TRAIL: string;
+	DOUBLE_JUMP_DUST: string;
+	DOUBLE_JUMP_DUST_BACK: string;
+	KNOCKBACK_SMOKE: string;
+	CRASH_BOUNCE: string;
+	CRASH_BOUNCE_BACK: string;
+	CRASH_NORMAL: string;
+	GROUND_BOUNCE: string;
+	GROUND_BOUNCE_BACK: string;
+	LAND_DUST: string;
+	LAND_DUST_BACK: string;
+	SPARKLE_FASTFALL: string;
+	KO_BLAST: string;
+	CLANK: string;
+	GROUNDED_SPIKE: string;
+	GROUNDED_SPIKE_BACK: string;
+	MEDIUM_NORMAL_HIT: string;
+	DUST_START_LIGHT: string;
+	DUST_THROUGH: string;
+	DUST_SPIN: string;
+	DUST_POOF: string;
+	DUST_POOF_BACK: string;
+	DUST_SPIN_BACK: string;
+	SPARKLE_LIGHT: string;
+	SPARKLE_HEAVY: string;
+	SPIKE: string;
+	SPIKE_BACK: string;
+	LIGHT_NORMAL_HIT: string;
+	LIGHT_NORMAL_HIT_BACK: string;
+	MEDIUM_NORMAL_HIT_BACK: string;
+	HEAVY_NORMAL_HIT: string;
+	HEAVY_NORMAL_HIT_BACK: string;
+	FATAL_NORMAL_HIT: string;
+	FATAL_NORMAL_HIT_BACK: string;
+	BURY: string;
+	BURY_BACK: string;
+	UNBURY: string;
+	UNBURY_BACK: string;
+	FREEZE: string;
+	FREEZE_BACK: string;
+	FREEZE_IN: string;
+	FREEZE_IN_BACK: string;
+	UNFREEZE: string;
+	UNFREEZE_BACK: string;
+	ITEM_INDICATOR: string;
+}
+
+declare type TGlobalVfx = {
+	constructor();
+	AIRDASH: string;
+	AIRDASH_BACK: string;
+	STAMINA_EXPLODE: string;
+	LIGHT_NORMAL_ANGLED_HIT: string;
+	LIGHT_NORMAL_ANGLED_HIT_BACK: string;
+	MEDIUM_NORMAL_ANGLED_HIT: string;
+	MEDIUM_NORMAL_ANGLED_HIT_BACK: string;
+	HEAVY_NORMAL_ANGLED_HIT: string;
+	HEAVY_NORMAL_ANGLED_HIT_BACK: string;
+	FATAL_NORMAL_ANGLED_HIT: string;
+	FATAL_NORMAL_ANGLED_HIT_BACK: string;
+	REVIVAL: string;
+	DUST_START_HEAVY: string;
+	JUMP_TRAIL: string;
+	DOUBLE_JUMP_DUST: string;
+	DOUBLE_JUMP_DUST_BACK: string;
+	KNOCKBACK_SMOKE: string;
+	CRASH_BOUNCE: string;
+	CRASH_BOUNCE_BACK: string;
+	CRASH_NORMAL: string;
+	GROUND_BOUNCE: string;
+	GROUND_BOUNCE_BACK: string;
+	LAND_DUST: string;
+	LAND_DUST_BACK: string;
+	SPARKLE_FASTFALL: string;
+	KO_BLAST: string;
+	CLANK: string;
+	GROUNDED_SPIKE: string;
+	GROUNDED_SPIKE_BACK: string;
+	MEDIUM_NORMAL_HIT: string;
+	DUST_START_LIGHT: string;
+	DUST_THROUGH: string;
+	DUST_SPIN: string;
+	DUST_POOF: string;
+	DUST_POOF_BACK: string;
+	DUST_SPIN_BACK: string;
+	SPARKLE_LIGHT: string;
+	SPARKLE_HEAVY: string;
+	SPIKE: string;
+	SPIKE_BACK: string;
+	LIGHT_NORMAL_HIT: string;
+	LIGHT_NORMAL_HIT_BACK: string;
+	MEDIUM_NORMAL_HIT_BACK: string;
+	HEAVY_NORMAL_HIT: string;
+	HEAVY_NORMAL_HIT_BACK: string;
+	FATAL_NORMAL_HIT: string;
+	FATAL_NORMAL_HIT_BACK: string;
+	BURY: string;
+	BURY_BACK: string;
+	UNBURY: string;
+	UNBURY_BACK: string;
+	FREEZE: string;
+	FREEZE_BACK: string;
+	FREEZE_IN: string;
+	FREEZE_IN_BACK: string;
+	UNFREEZE: string;
+	UNFREEZE_BACK: string;
+	ITEM_INDICATOR: string;
+	/**
+	 * Translates constant to a user-readable string.
+	 */
+	constToString(value: string): string;
 }
 
 /**
@@ -2952,6 +3156,14 @@ declare class AnimationStats extends JSONClass {
 	 * Immovable animations do not take knockback from windboxes and cannot be pushed by other solid objects, but may still push other movable solid objects.
 	 */
 	immovable: boolean;
+	/**
+	 * When true, the entity will be able to attach to floors both automatically and manually. Otherwise will always treat as aerial and not attached to anything. Resorts to default GameObjectStat value when set to null
+	 */
+	allowFloorAttach: boolean;
+	/**
+	 * When true, the entity will be able to attach to walls both automatically (while grazing) and manually. Resorts to default GameObjectStat value when set to null
+	 */
+	allowWallAttach: boolean;
 	/**
 	 * When set to true, animation playback is halted on the current frame.
 	 */
@@ -3168,6 +3380,14 @@ declare class GameObjectStats extends JSONClass {
 	 * Immovable objects are immune to windboxes and cannot be pushed by other solid entities. They will still push other solid objects if both the object and animation's solid stat is true.
 	 */
 	immovable: boolean;
+	/**
+	 * Whether or not to enable attaching to floors either through default behaviour or when explicitly set. If disabled, will remain in an airborne state.
+	 */
+	allowFloorAttach: boolean;
+	/**
+	 * Whether or not to enable attaching to walls either through default behaviour (i.e. wall grazing) or when explicitly set.
+	 */
+	allowWallAttach: boolean;
 	/**
 	 * Whether or not to enable structure collisions.
 	 */
@@ -3408,7 +3628,7 @@ declare interface CharacterStats extends GameObjectStats, TCharacterStats {
 	 */
 	jumpSpeedBackwardInitialXSpeed: number;
 	/**
-	 * An array of the character's double jump speeds. Values less than or equal to zero will have no effect. The number of entries in the array correlates with how many double jumps the character will get from the engine.
+	 * An array of the character's double jump speeds. Values set to Math.NaN will cause no speed changes. The number of entries in the array correlates with how many double jumps the character will get from the engine.
 	 */
 	doubleJumpSpeeds: number[];
 	/**
@@ -3500,11 +3720,11 @@ declare interface CharacterStats extends GameObjectStats, TCharacterStats {
 	 */
 	walkSpeedCap: number;
 	/**
-	 * Character's initial run speed.
+	 * Character's initial run speed. Setting to null or Math.NaN will cause no speed changes
 	 */
 	dashSpeed: number;
 	/**
-	 * Character's initial run speed (post-turn only).
+	 * Character's initial run speed (post-turn only). Setting to null or Math.NaN will cause no speed changes
 	 */
 	runSpeedInitial: number;
 	/**
@@ -3600,6 +3820,22 @@ declare interface CharacterStats extends GameObjectStats, TCharacterStats {
 	 * Vertical offset for the bury animation, relative to their ECB's vertical midpoint.
 	 */
 	buryOffsetY: number;
+	/**
+	 * Horizontal offset for the freeze VFX
+	 */
+	freezeEffectOffsetX: number;
+	/**
+	 * Vertical offset for the freeze VFX
+	 */
+	freezeEffectOffsetY: number;
+	/**
+	 * Horizontal scale for the freeze VFX
+	 */
+	freezeEffectScaleX: number;
+	/**
+	 * Vertical scale for the freeze VFX
+	 */
+	freezeEffectScaleY: number;
 	/**
 	 * The behaviour of performing SHIELD while midair
 	 */
@@ -3724,7 +3960,7 @@ declare interface TCharacterStats {
 }
 
 declare interface HitboxStats extends JSONClass, THitboxStats {
-	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, entityHitConditions?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitSoundOverrideArray?: string[], hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, physicsHitConditions?: number, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
+	new(settings: {absorbable?: boolean, angle?: number, attackId?: number, attackRatio?: number, attackStrength?: number, baseKnockback?: number, bodyX?: number, bodyY?: number, buryTimeBase?: number, buryTimeScaling?: number, buryType?: number, damage?: number, directionalInfluence?: boolean, disabled?: boolean, element?: number, entityHitConditions?: number, flinch?: boolean, forceTumbleFall?: boolean, hitEffectOverride?: string, hitSoundOverride?: string, hitSoundOverrideArray?: string[], hitstop?: number, hitstopMultiplier?: number, hitstopNudgeMultiplier?: number, hitstopOffset?: number, hitstun?: number, index?: number, jabResetType?: number, knockbackCap?: number, knockbackCapDelay?: number, knockbackGrowth?: number, limb?: number, maxChargeDamageMultiplier?: number, metadata?: any, owner?: GameObject, physicsHitConditions?: number, rawAngle?: number, rawDamage?: number, reflectable?: boolean, reverse?: boolean, reversibleAngle?: boolean, selfHitstop?: number, selfHitstopOffset?: number, shieldDamageMultiplier?: number, shieldHitstop?: number, shieldable?: boolean, shieldstunMultiplier?: number, stackKnockback?: boolean, tumbleType?: number, weightDependentKnockback?: number});
 	/**
 	 * The numerical index of the hitbox that can be used to identify which hitbox was involved in a hit.
 	 */
@@ -3773,6 +4009,10 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 	 * Determines how many frames the victim will be held in place before knockback is applied. When negative this value is automatically calculated.
 	 */
 	hitstop: number;
+	/**
+	 * Determines how many frames the shielding victim will be held in place before knockback is applied. When negative, the default hitstop value is used.
+	 */
+	shieldHitstop: number;
 	/**
 	 * Determines how many frames the attacker will be held in place before knockback is applied. When negative this value is automatically calculated.
 	 */
@@ -3904,6 +4144,11 @@ declare interface HitboxStats extends JSONClass, THitboxStats {
 	 * Number of frames to delay the application of knockbackCap. When negative or zero, knockbackCap is immediately applied. When 1, the cap will be applied on the next frame.
 	 */
 	knockbackCapDelay: number;
+	/**
+	 * Freeze settings. Only affects hitting Characters.
+	 * @see FreezeType
+	 */
+	freezeType: number;
 	/**
 	 * Bury settings. Only affects Characters.
 	 * @see BuryType
@@ -4588,46 +4833,62 @@ declare class MaskFilter extends Filter {
 
 declare class Math {
 	protected constructor();
+	/**
+	 * Not a number constant
+	 */
 	static NaN: number;
+	/**
+	 * Positive infinity constant
+	 */
 	static POSITIVE_INFINITY: number;
+	/**
+	 * Negative infinity constant
+	 */
 	static NEGATIVE_INFINITY: number;
+	/**
+	 * Pi constant (3.14159...)
+	 */
 	static PI: number;
-	static floor: (v: number) => number;
-	static ceil: (v: number) => number;
-	static isNaN: (f: number) => boolean;
-	static isFinite: (f: number) => boolean;
-	static ffloor: (v: number) => number;
-	static fround: (v: number) => number;
-	static round: (v: number) => number;
-	static pow: (v: number, exp: number) => number;
-	static sqrt: (v: number) => number;
-	static log: (v: number) => number;
-	static max: (a: number, b: number) => number;
-	static min: (a: number, b: number) => number;
-	static sin: (v: number) => number;
-	static cos: (v: number) => number;
-	static tan: (v: number) => number;
-	static asin: (v: number) => number;
-	static acos: (v: number) => number;
-	static atan: (v: number) => number;
-	static atan2: (y: number, x: number) => number;
-	static fastSin: (degrees: number) => number;
-	static fastCos: (degrees: number) => number;
-	static fastTan: (degrees: number) => number;
-	static abs: (input: number) => number;
-	static modulo: (number: number, modulo: number) => number;
-	static forceBase360: (angle: number) => number;
+	static floor(value: number): number;
+	static ceil(value: number): number;
+	static isNaN(value: number): boolean;
+	static isFinite(value: number): boolean;
+	static ffloor(value: number): number;
+	static fround(value: number): number;
+	static round(value: number): number;
+	static pow(value: number, exp: number): number;
+	static sqrt(value: number): number;
+	static log(value: number): number;
+	static max(value1: number, value2: number): number;
+	static min(value1: number, value2: number): number;
+	static sin(value: number): number;
+	static cos(value: number): number;
+	static tan(value: number): number;
+	static asin(value: number): number;
+	static acos(value: number): number;
+	static atan(value: number): number;
+	static atan2(yValue: number, xValue: number): number;
+	static fastSin(degrees: number): number;
+	static fastCos(degrees: number): number;
+	static fastTan(degrees: number): number;
+	static abs(value: number): number;
+	static modulo(a: number, b: number): number;
+	static forceBase360(degrees: number): number;
 	static getDistance(point1: Point, point2: Point): number;
 	static getAngleBetween(center: Point, target: Point): number;
-	static getAngleFromVelocity: (xVel: number, yVel: number) => number;
-	static calculateXVelocity: (speed: number, angle: number) => number;
-	static calculateYVelocity: (speed: number, angle: number) => number;
-	static calculateSpeed: (x_speed: number, y_speed: number) => number;
-	static toDegrees: (radians: number) => number;
-	static toRadians: (degrees: number) => number;
-	static flipAngleOverXAxis: (angle: number) => number;
-	static flipAngleOverYAxis: (angle: number) => number;
-	static angleDifference: (angleA: number, angleB: number) => number;
+	static getAngleFromVelocity(xVelocity: number, yVelocity: number): number;
+	static calculateXVelocity(degrees: number, speed: number): number;
+	static calculateYVelocity(degrees: number, speed: number): number;
+	static calculateSpeed(xVelocity: number, yVelocity: number): number;
+	static toDegrees(radians: number): number;
+	static toRadians(degrees: number): number;
+	static flipAngleOverXAxis(degrees: number): number;
+	static flipAngleOverYAxis(degrees: number): number;
+	static angleDifference(degrees1: number, degrees2: number): number;
+	static calculateAccelerationDistance(startSpeed: number, acceleration: number, speedCap: number, frames: number): number;
+	static calculateVelocityAfterAcceleration(startSpeed: number, acceleration: number, speedCap: number, frames: number): number;
+	static calculateAccelerationFrames(startSpeed: number, acceleration: number, speedCap: number, frames: number): number;
+	static calculateDistanceLostToFriction(startSpeed: number, friction: number, frames: number): number;
 }
 
 declare class NineSlice extends Drawable {
@@ -4895,7 +5156,7 @@ declare class Stage extends ApiObject {
 	/**
 	 * Updates the stage's stats that are allowed to be changed. Currently, only ambient color and each blast zone's type can be changed.
 	 */
-	updateStageStats(stats: {ambientColor?: number, animationId?: string, bottomBlastZoneType?: number, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, leftBlastZoneType?: number, rightBlastZoneType?: number, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string, topBlastZoneType?: number}): void;
+	updateStageStats(stats: {ambientColor?: number, animationId?: string, bottomBlastZoneType?: number, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomInRate?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, leftBlastZoneType?: number, rightBlastZoneType?: number, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string, topBlastZoneType?: number}): void;
 	isDisposed(): boolean;
 }
 
@@ -5088,13 +5349,24 @@ declare class BodyStatus {
 declare class AttackElement {
 	protected constructor();
 	static readonly NORMAL: number;
+	/**
+	 * @deprecated Unsupported element. Handled as AttackElement.NORMAL.
+	 */
 	static readonly WIND: number;
 	static readonly FIRE: number;
 	static readonly ELECTRIC: number;
 	static readonly ICE: number;
+	/**
+	 * @deprecated Unsupported element. Handled as AttackElement.NORMAL.
+	 */
 	static readonly LAY: number;
+	/**
+	 * @deprecated Unsupported element. Handled as AttackElement.NORMAL.
+	 */
 	static readonly POISON: number;
 	static readonly MAGIC: number;
+	static readonly WATER: number;
+	static readonly DARKNESS: number;
 	/**
 	 * Translates constant to a user-readable string.
 	 */
@@ -5379,6 +5651,18 @@ declare class BuryType {
 	 * The attack will induce bury if the target is on the ground, or will induce bury on their next ground touch while in hitstun.
 	 */
 	static readonly PLUNGE: number;
+}
+
+declare class FreezeType {
+	protected constructor();
+	/**
+	 * The attack will not induce a freeze state.
+	 */
+	static readonly NONE: number;
+	/**
+	 * The attack will induce freeze.
+	 */
+	static readonly FREEZE: number;
 }
 
 declare class StrongInputType {
@@ -6040,7 +6324,7 @@ declare class StageShadowLayerStats extends JSONClass {
 }
 
 declare class StageStats extends JSONClass {
-	constructor(settings: {ambientColor?: number, animationId?: string, bottomBlastZoneType?: number, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, leftBlastZoneType?: number, rightBlastZoneType?: number, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string, topBlastZoneType?: number});
+	constructor(settings: {ambientColor?: number, animationId?: string, bottomBlastZoneType?: number, camera?: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomInRate?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number}, leftBlastZoneType?: number, rightBlastZoneType?: number, shadowLayers?: {color?: number, foreground?: boolean, id?: string, maskAnimationId?: string, maskSpriteContent?: string}[], spriteContent?: string, topBlastZoneType?: number});
 	/**
 	 * The content id path of the sprite to load for this stage
 	 */
@@ -6056,7 +6340,7 @@ declare class StageStats extends JSONClass {
 	/**
 	 * Camera settings for the stage
 	 */
-	camera: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number};
+	camera: {backgrounds?: {animationId?: string, antiAliasing?: boolean, customContainer?: any, depth?: number, foreground?: boolean, horizontalPanLock?: boolean, horizontalScroll?: boolean, loopHeight?: number, loopWidth?: number, mode?: string, offsetX?: number, offsetY?: number, originalBGHeight?: number, originalBGWidth?: number, scaleMultiplier?: number, spriteContent?: string, verticalPanLock?: boolean, verticalScroll?: boolean, xPanMultiplier?: number, yPanMultiplier?: number}[], boundary?: Rectangle, camEaseRate?: number, camMoveThreshold?: number, camZoomInRate?: number, camZoomRate?: number, freeCamSpeed?: number, initialHeight?: number, initialWidth?: number, minZoomHeight?: number, startX?: number, startY?: number, zoomX?: number, zoomY?: number};
 	/**
 	 * Specifies the color that should be added to non-stage elements
 	 */
